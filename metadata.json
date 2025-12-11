@@ -1,0 +1,5 @@
+{
+  "name": "House Tax Admin",
+  "description": "A mobile-first administration dashboard for managing house tax collections, clusters, and household details.",
+  "requestFramePermissions": []
+}
