@@ -32,24 +32,40 @@ export const Dashboard: React.FC = () => {
     setShowSearchModal(false); 
   };
 
+  // Reusable Card Component for uniform look
   const Card: React.FC<{ 
     label: string; 
-    value: string; 
+    value?: string; 
+    subLabel?: string;
     icon: React.ReactNode; 
     iconBg: string; 
-    iconColor: string; 
-  }> = ({ label, value, icon, iconBg, iconColor }) => (
-    <div className="bg-white/60 backdrop-blur-md p-2 rounded-2xl shadow-lg border border-white/50 flex flex-col justify-center gap-0.5 hover:bg-white/70 transition-colors h-full min-h-[60px]">
-      <div className="flex items-center gap-2">
-        <div className={`p-1 rounded-lg ${iconBg} ${iconColor} shadow-sm shrink-0`}>
-          {/* Clone to force size */}
-          {React.isValidElement(icon) 
-            ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-3.5 h-3.5' })
-            : icon}
-        </div>
-        <h3 className="text-base font-bold text-slate-900 drop-shadow-sm leading-none">{value}</h3>
+    iconColor: string;
+    onClick?: () => void;
+    rightElement?: React.ReactNode;
+    children?: React.ReactNode;
+  }> = ({ label, value, subLabel, icon, iconBg, iconColor, onClick, rightElement, children }) => (
+    <div 
+      onClick={onClick}
+      className={`bg-white/60 backdrop-blur-md p-2.5 rounded-2xl shadow-lg border border-white/50 flex flex-col justify-center gap-1 hover:bg-white/70 transition-all h-full min-h-[75px] relative overflow-hidden ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+    >
+      <div className="flex justify-between items-start">
+         <div className="flex items-center gap-2">
+            <div className={`p-1.5 rounded-lg ${iconBg} ${iconColor} shadow-sm shrink-0`}>
+              {React.isValidElement(icon) 
+                ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })
+                : icon}
+            </div>
+            {value && <h3 className="text-lg font-bold text-slate-900 drop-shadow-sm leading-none tracking-tight">{value}</h3>}
+         </div>
+         {rightElement}
       </div>
-      <p className="text-[9px] uppercase font-bold text-slate-600 ml-0.5 tracking-wide truncate">{label}</p>
+      
+      <div className="flex flex-col">
+        <p className="text-[10px] uppercase font-bold text-slate-600 ml-0.5 tracking-wide truncate">{label}</p>
+        {subLabel && <p className="text-[9px] text-slate-500 ml-0.5 font-medium leading-none">{subLabel}</p>}
+      </div>
+      
+      {children}
     </div>
   );
 
@@ -123,10 +139,10 @@ export const Dashboard: React.FC = () => {
         <p className="text-slate-600 text-[10px] font-medium">Overview of all tax collections</p>
       </div>
 
-      {/* Stats Grid - Compact */}
-      <div className="grid grid-cols-2 gap-2">
+      {/* Primary Stats Grid */}
+      <div className="grid grid-cols-2 gap-2.5">
         <Card 
-          label="Total Households" 
+          label="Households" 
           value={stats.totalHouseholds.toLocaleString()} 
           icon={<Home />} 
           iconBg="bg-blue-100"
@@ -134,90 +150,82 @@ export const Dashboard: React.FC = () => {
         />
         <Card 
           label="Total Demand" 
-          value={`₹${stats.totalDemand.toLocaleString()}`} 
+          value={`₹${(stats.totalDemand / 100000).toFixed(2)}L`} // Formatted for space
+          subLabel={`₹${stats.totalDemand.toLocaleString()}`}
           icon={<TrendingUp />}
           iconBg="bg-green-100"
           iconColor="text-green-600"
         />
         <Card 
-          label="Total Collection" 
-          value={`₹${stats.totalCollection.toLocaleString()}`} 
+          label="Collected" 
+          value={`₹${(stats.totalCollection / 100000).toFixed(2)}L`}
+          subLabel={`₹${stats.totalCollection.toLocaleString()}`}
           icon={<IndianRupee />}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
         />
         <Card 
-          label="Pending Amount" 
-          value={`₹${stats.pendingAmount.toLocaleString()}`} 
+          label="Pending" 
+          value={`₹${(stats.pendingAmount / 100000).toFixed(2)}L`}
+          subLabel={`₹${stats.pendingAmount.toLocaleString()}`}
           icon={<TrendingDown />}
           iconBg="bg-orange-100"
           iconColor="text-orange-600"
         />
       </div>
 
-      {/* Clusters Card - Compact */}
-      <div 
-        onClick={() => navigate('/clusters')}
-        className="bg-gradient-to-r from-violet-600 to-purple-600 p-2.5 rounded-2xl shadow-xl shadow-purple-500/20 text-white flex items-center gap-3 cursor-pointer hover:scale-[1.01] transition-transform active:scale-95"
-      >
-        <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm shadow-sm">
-             <LayoutGrid className="w-5 h-5 text-white" />
-        </div>
-        <div className="flex-1">
-             <h3 className="text-base font-bold leading-tight">Clusters</h3>
-             <p className="text-purple-100 text-[10px] font-medium opacity-90">View analytics & zones</p>
-        </div>
-        <div className="bg-black/20 p-1 rounded-full">
-             <ChevronRight className="w-4 h-4 text-white/80" />
-        </div>
-      </div>
+      {/* Actions & Secondary Stats Grid - Consistent Height & Style */}
+      <div className="grid grid-cols-2 gap-2.5">
+        
+        {/* Clusters */}
+        <Card
+            label="Clusters"
+            subLabel="View Zones"
+            icon={<LayoutGrid />}
+            iconBg="bg-violet-100"
+            iconColor="text-violet-600"
+            onClick={() => navigate('/clusters')}
+            rightElement={<ChevronRight className="w-4 h-4 text-slate-300" />}
+        />
 
-      {/* Make Payment Action Card - Compact */}
-      <div className="bg-gradient-to-r from-brand-600 to-blue-600 p-2.5 rounded-2xl shadow-xl shadow-blue-500/20 text-white flex items-center justify-between">
-          <div>
-              <h3 className="text-base font-bold leading-tight">Make Payment</h3>
-              <p className="text-blue-100 text-[10px] font-medium opacity-90">Search & collect tax instantly</p>
-          </div>
-          <button 
-             onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchModal(true); }}
-             className="bg-white text-brand-600 p-2 rounded-xl shadow-sm hover:scale-105 active:scale-95 transition-all"
-          >
-              <CreditCard className="w-5 h-5" />
-          </button>
-      </div>
+        {/* Make Payment */}
+        <Card
+            label="Pay Tax"
+            subLabel="Record Payment"
+            icon={<CreditCard />}
+            iconBg="bg-brand-100"
+            iconColor="text-brand-600"
+            onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchModal(true); }}
+            rightElement={<div className="bg-brand-50 rounded-full p-0.5"><ChevronRight className="w-3.5 h-3.5 text-brand-400" /></div>}
+        />
 
-      {/* Collection Rate Block - Compact */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-2.5 rounded-2xl shadow-xl shadow-emerald-500/20 text-white">
-        <div className="flex items-center gap-3 mb-2">
-             <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm shadow-sm">
-                <TrendingUp className="w-5 h-5 text-white" />
-             </div>
-             <div className="flex-1">
-                <h3 className="text-base font-bold leading-tight">Collection Rate</h3>
-                <p className="text-emerald-100 text-[10px] font-medium opacity-90">Overall progress</p>
-             </div>
-             <span className="text-xl font-bold">{stats.collectionRate}%</span>
-        </div>
-        <div className="w-full bg-black/20 rounded-full h-1 overflow-hidden">
-            <div 
-                className="bg-white h-full rounded-full transition-all duration-1000 ease-out shadow-sm" 
-                style={{ width: `${stats.collectionRate}%` }}
-            />
-        </div>
-      </div>
+        {/* Collection Rate */}
+        <Card
+            label="Collection Rate"
+            subLabel="Progress"
+            icon={<TrendingUp />}
+            iconBg="bg-teal-100"
+            iconColor="text-teal-600"
+        >
+            <div className="mt-1.5 flex items-center gap-2">
+                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                    <div className="h-full bg-teal-500 rounded-full" style={{ width: `${stats.collectionRate}%` }}></div>
+                </div>
+                <span className="text-xs font-bold text-slate-700">{stats.collectionRate}%</span>
+            </div>
+        </Card>
 
-      {/* Svamitva Card - Compact */}
-      <div 
-        onClick={() => navigate('/svamitva')}
-        className="bg-gradient-to-r from-pink-600 to-rose-600 p-2.5 rounded-2xl shadow-xl shadow-pink-500/20 text-white flex items-center justify-between cursor-pointer hover:scale-[1.01] transition-transform active:scale-95"
-      >
-        <div>
-             <h3 className="text-base font-bold leading-tight">Svamitva</h3>
-             <p className="text-pink-100 text-[10px] font-medium opacity-90">Property holding register</p>
-        </div>
-        <div className="bg-white/20 p-2 rounded-xl backdrop-blur-sm shadow-sm">
-             <FileText className="w-5 h-5 text-white" />
-        </div>
+        {/* Svamitva */}
+        <Card
+            label="Svamitva"
+            subLabel="Register"
+            icon={<FileText />}
+            iconBg="bg-pink-100"
+            iconColor="text-pink-600"
+            onClick={() => navigate('/svamitva')}
+            rightElement={<ChevronRight className="w-4 h-4 text-slate-300" />}
+        />
+
       </div>
 
     </div>

@@ -88,10 +88,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ receiptNo, records, househo
     const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
 
     const handlePrint = () => {
-        // Use a slight timeout to ensure any state updates or UI rendering is complete
-        setTimeout(() => {
-            window.print();
-        }, 300);
+        window.print();
     };
 
     return (
@@ -227,46 +224,44 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ receiptNo, records, househo
                     }
 
                     /* Hide all regular content */
-                    body * {
-                        visibility: hidden;
+                    body > * {
+                        display: none !important;
                     }
                     
-                    /* Helper to ensure no other containers block the view */
-                    .fixed, .inset-0, .z-50, .backdrop-blur-sm {
-                        position: static !important;
-                        background: none !important;
-                        width: auto !important;
-                        height: auto !important;
-                        overflow: visible !important;
-                    }
-
-                    /* Receipt Container Targeting */
-                    #printable-receipt, #printable-receipt * {
-                        visibility: visible !important;
-                    }
-
-                    #printable-receipt {
+                    /* Make the modal container visible and absolute */
+                    .fixed.z-50 {
                         position: absolute !important;
                         left: 0 !important;
                         top: 0 !important;
                         width: 100% !important;
-                        margin: 0 !important;
-                        padding: 10px !important;
-                        background: white !important;
-                        border: none !important;
                         height: auto !important;
-                        max-height: none !important;
-                        overflow: visible !important;
+                        display: block !important;
+                        background: white !important;
+                        z-index: 9999 !important;
                     }
 
-                    /* Hide screen-only controls */
+                    /* Hide screen-only controls inside the modal */
                     .no-print {
                         display: none !important;
+                    }
+
+                    /* Receipt Container Targeting */
+                    #printable-receipt {
+                        display: block !important;
+                        visibility: visible !important;
+                        width: 100% !important;
+                        position: absolute !important;
+                        left: 0 !important;
+                        top: 0 !important;
+                    }
+
+                    #printable-receipt * {
+                        visibility: visible !important;
                     }
                     
                     @page {
                         size: auto;
-                        margin: 5mm;
+                        margin: 0mm;
                     }
                 }
             `}</style>
