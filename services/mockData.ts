@@ -105,3 +105,14 @@ AssessmentNo,Date,EventType,Description,FromOwner,ToOwner
 211320001218,2016-01-01,Construction,Building Construction,,-
 211320001218,2025-01-05,Mutation,Name Correction in Records,SILLA MANMADHA,SILLA MANMADHA RAO
 `;
+
+// 7. Svamitva Register (36 Cols + Cluster)
+// Note: Some fields are empty in mock data but present in structure
+export const svamitvaCSV = `
+ClusterNo,SlNo,AssessmentNo,SurveyNo,LPNo,GramaKantam,DoorNo,WardNo,Street,Habitation,NatureOfProperty,NatureOfLandUse,Layout,ExtentLand,ExtentBuiltUp,NatureBuiltUp,NatureUsage,NatureOwnership,Surname,OwnerName,GuardianName,PlotNo,Aadhar,ModeAcquisition,TaxPaidFrom,NoOfSides,MeasA,MeasB,MeasC,MeasD,MeasE,MeasF,BoundNorth,BoundEast,BoundSouth,BoundWest,Phone,Remarks
+C1,1,211320001007,127,,Original,211320C24-1,2,Main Rd,Pogiri,Private,Stand Alone Building,Approved,60,50,RCC,Residential,Individual,ENUGUTALA,APPALANAIDU,RAMULU,,XXXX-XXXX-4397,Inheritance,2018,4,10,12,10,12,,,Road,Plot 24,House 2,Lane,9666489862,Verified
+C1,2,211320001008,127,,Original,211320C24-2,2,Main Rd,Pogiri,Private,Stand Alone Building,Approved,70,60,RCC,Residential,Individual,ENUGUTALA,LAXMINARAYANA,RAMULU,,XXXX-XXXX-6105,Inheritance,2018,4,12,14,12,14,,,Road,Plot 25,House 1,Lane,9908731810,Verified
+C10,3,211320000421,100,,Extended,211320C10-45,5,Temple St,Pogiri,Private,Stand Alone Building,Unapproved,100,80,Tiled,Residential,Individual,YENDUVA,RAMANA,APPALA SWAMI,,XXXX-XXXX-0421,Purchase,2015,4,20,25,20,25,,,Road,House 44,House 46,Road,9000000421,Pending
+C7,4,211320000249,103,,Original,211320C7-14,3,School Ln,Pogiri,Private,Vacant Plot,Approved,120,0,NA,Residential,Individual,JADDU,VISHNUMURTHI,KRISHNAM NAIDU,,XXXX-XXXX-0249,Gift,2018,4,30,40,30,40,,,Road,Open,House 13,Road,9000000249,
+C28,5,211320001552,104,,Original,211320C28-55,8,New Colony,Pogiri,Private,Stand Alone Building,Approved,80,60,RCC,Residential,Individual,MAKKA,TANUSHA,RAMANA,55,XXXX-XXXX-1552,Purchase,2019,4,15,18,15,18,,,Road,Plot 56,Plot 54,Road,9000001552,
+`;

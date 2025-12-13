@@ -1,7 +1,7 @@
 
 
 import { parseCSV } from './utils';
-import { ownerCSV, propertyCSV, demandCSV, collectionCSV, userCSV, historyCSV } from './mockData';
+import { ownerCSV, propertyCSV, demandCSV, collectionCSV, userCSV, historyCSV, svamitvaCSV } from './mockData';
 
 // --- Raw Data Interfaces (Directly mapping CSV columns) ---
 
@@ -101,6 +101,47 @@ export interface RawHistory {
   ToOwner?: string;
 }
 
+export interface RawSvamitva {
+  ClusterNo: string;
+  SlNo: string | number;
+  AssessmentNo: string | number;
+  SurveyNo: string | number;
+  LPNo: string;
+  GramaKantam: string;
+  DoorNo: string;
+  WardNo: string | number;
+  Street: string;
+  Habitation: string;
+  NatureOfProperty: string;
+  NatureOfLandUse: string;
+  Layout: string;
+  ExtentLand: number;
+  ExtentBuiltUp: number;
+  NatureBuiltUp: string;
+  NatureUsage: string;
+  NatureOwnership: string;
+  Surname: string;
+  OwnerName: string;
+  GuardianName: string;
+  PlotNo: string | number;
+  Aadhar: string;
+  ModeAcquisition: string;
+  TaxPaidFrom: string | number;
+  NoOfSides: string | number;
+  MeasA: string | number;
+  MeasB: string | number;
+  MeasC: string | number;
+  MeasD: string | number;
+  MeasE: string | number;
+  MeasF: string | number;
+  BoundNorth: string;
+  BoundEast: string;
+  BoundSouth: string;
+  BoundWest: string;
+  Phone: string | number;
+  Remarks: string;
+}
+
 // --- Loading Functions ---
 
 export const loadRawUsers = (): RawUser[] => parseCSV(userCSV);
@@ -109,3 +150,4 @@ export const loadRawProperties = (): RawProperty[] => parseCSV(propertyCSV);
 export const loadRawDemands = (): RawDemand[] => parseCSV(demandCSV);
 export const loadRawCollections = (): RawCollection[] => parseCSV(collectionCSV);
 export const loadRawHistory = (): RawHistory[] => parseCSV(historyCSV);
+export const loadRawSvamitva = (): RawSvamitva[] => parseCSV(svamitvaCSV);
