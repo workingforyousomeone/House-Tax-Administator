@@ -257,14 +257,22 @@ export const getClustersForUser = (user?: User) => {
   return CLUSTERS.filter(c => user.clusters.includes(c.id));
 };
 
-export const searchHouseholds = (query: string): Household[] => {
+export const searchHouseholds = (query: string, user?: User): Household[] => {
   const q = query.toLowerCase().trim();
   if (!q) return [];
-  return HOUSEHOLDS.filter(h => 
+  
+  let results = HOUSEHOLDS.filter(h => 
     h.assessmentNumber.includes(q) || 
     h.ownerName.toLowerCase().includes(q) ||
     h.mobileNumber.includes(q)
   );
+
+  // Filter by user clusters if they are a restricted user
+  if (user && user.role === 'USER') {
+    results = results.filter(h => user.clusters.includes(h.clusterId));
+  }
+
+  return results;
 };
 
 export const addPayment = (householdId: string, amount: number, mode: string): PaymentRecord | null => {
@@ -297,9 +305,9 @@ export const addPayment = (householdId: string, amount: number, mode: string): P
   return newRecord;
 };
 
-// --- NEW HELPER: Get All Payments Globally ---
-export const getAllPayments = () => {
-  return HOUSEHOLDS.flatMap(h => 
+// --- NEW HELPER: Get All Payments Globally (Filtered by User) ---
+export const getAllPayments = (user?: User) => {
+  let allPayments = HOUSEHOLDS.flatMap(h => 
     h.paymentHistory.map(p => ({
       ...p,
       householdId: h.id,
@@ -307,7 +315,14 @@ export const getAllPayments = () => {
       assessmentNumber: h.assessmentNumber,
       clusterId: h.clusterId
     }))
-  ).sort((a, b) => {
+  );
+
+  // Filter by user clusters if they are a restricted user
+  if (user && user.role === 'USER') {
+    allPayments = allPayments.filter(p => user.clusters.includes(p.clusterId));
+  }
+
+  return allPayments.sort((a, b) => {
     // Sort by Date Descending
     // Format is DD-MM-YYYY
     const [d1, m1, y1] = a.dateOfPayment.split('-').map(Number);

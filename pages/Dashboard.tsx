@@ -48,7 +48,8 @@ export const Dashboard: React.FC = () => {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value;
     setSearchQuery(q);
-    setSearchResults(searchHouseholds(q));
+    // Pass user to searchHouseholds to restrict results
+    setSearchResults(searchHouseholds(q, user || undefined));
   };
 
   const openPaymentFor = (h: Household) => {
@@ -180,26 +181,23 @@ export const Dashboard: React.FC = () => {
         <Card 
           index={1}
           label="Total Demand" 
-          value={`₹${(stats.totalDemand / 100000).toFixed(2)}L`} 
-          subLabel={`₹${stats.totalDemand.toLocaleString()}`}
-          icon={<TrendingUp />}
-          iconBg="bg-green-100"
-          iconColor="text-green-600"
-        />
-        <Card 
-          index={2}
-          label="Collected" 
-          value={`₹${(stats.totalCollection / 100000).toFixed(2)}L`}
-          subLabel={`₹${stats.totalCollection.toLocaleString()}`}
+          value={`₹${stats.totalDemand.toLocaleString()}`}
           icon={<IndianRupee />}
           iconBg="bg-purple-100"
           iconColor="text-purple-600"
         />
         <Card 
+          index={2}
+          label="Collected" 
+          value={`₹${stats.totalCollection.toLocaleString()}`}
+          icon={<TrendingUp />}
+          iconBg="bg-green-100"
+          iconColor="text-green-600"
+        />
+        <Card 
           index={3}
           label="Pending" 
-          value={`₹${(stats.pendingAmount / 100000).toFixed(2)}L`}
-          subLabel={`₹${stats.pendingAmount.toLocaleString()}`}
+          value={`₹${stats.pendingAmount.toLocaleString()}`}
           icon={<TrendingDown />}
           iconBg="bg-orange-100"
           iconColor="text-orange-600"

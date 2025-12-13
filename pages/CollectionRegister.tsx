@@ -1,12 +1,15 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowLeft, Filter, IndianRupee, Calendar, User } from 'lucide-react';
 import { getAllPayments } from '../services/data';
+import { AuthContext } from '../App';
 
 export const CollectionRegister: React.FC = () => {
   const navigate = useNavigate();
-  const [payments, setPayments] = useState(getAllPayments());
+  const { user } = useContext(AuthContext);
+  // Pass user context to filter payments if necessary
+  const [payments, setPayments] = useState(getAllPayments(user || undefined));
   const [searchQuery, setSearchQuery] = useState('');
 
   // Derived state for filtering
