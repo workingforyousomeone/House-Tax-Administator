@@ -1,4 +1,5 @@
 
+
 import { Cluster, Household, DemandDetail, TapDemandDetail, PaymentRecord, User, HistoryRecord } from '../types';
 import { 
   loadRawUsers, 
@@ -209,6 +210,19 @@ export const CLUSTERS: Cluster[] = deriveClusters();
 
 export const authenticateUser = (username: string, password: string): User | undefined => {
   return USERS.find(u => u.id === username && u.password === password);
+};
+
+export const getUser = (userId: string): User | undefined => {
+  return USERS.find(u => u.id === userId);
+};
+
+export const updateUserPassword = (userId: string, newPass: string): boolean => {
+  const user = USERS.find(u => u.id === userId);
+  if (user) {
+    user.password = newPass;
+    return true;
+  }
+  return false;
 };
 
 export const getDashboardStats = (user?: User) => {

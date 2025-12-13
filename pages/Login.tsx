@@ -1,14 +1,26 @@
 
+
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../App';
-import { ArrowRight, User, Lock, Home, IndianRupee } from 'lucide-react';
-import { authenticateUser } from '../services/data';
+import { ArrowRight, User, Lock, Home, IndianRupee, KeyRound, X, Check, AlertCircle, Smartphone, LockKeyhole } from 'lucide-react';
+import { authenticateUser, getUser, updateUserPassword } from '../services/data';
+import { User as UserType } from '../types';
 
 export const Login: React.FC = () => {
   const { login } = useContext(AuthContext);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  
+  // Forgot Password State Machine
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState<'input' | 'otp' | 'reset' | 'success'>('input');
+  const [forgotUserId, setForgotUserId] = useState('');
+  const [tempUser, setTempUser] = useState<UserType | null>(null);
+  const [otpInput, setOtpInput] = useState('');
+  const [newPass, setNewPass] = useState('');
+  const [confirmPass, setConfirmPass] = useState('');
+  const [resetError, setResetError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,9 +33,199 @@ export const Login: React.FC = () => {
     }
   };
 
+  // Step 1: Verify User ID
+  const handleIdSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      setResetError('');
+      
+      const user = getUser(forgotUserId);
+      if (user) {
+          setTempUser(user);
+          setForgotStep('otp');
+          // SIMULATE SENDING OTP
+          setTimeout(() => {
+             alert(`DEMO: The OTP for ${user.name} is 1234`);
+          }, 500);
+      } else {
+          setResetError('User ID not found');
+      }
+  };
+
+  // Step 2: Verify OTP
+  const handleOtpSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      setResetError('');
+      if (otpInput === '1234') {
+          setForgotStep('reset');
+      } else {
+          setResetError('Invalid OTP');
+      }
+  };
+
+  // Step 3: Set New Password
+  const handleResetSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      setResetError('');
+      if (newPass.length < 4) {
+          setResetError('Password too short (min 4 chars)');
+          return;
+      }
+      if (newPass !== confirmPass) {
+          setResetError('Passwords do not match');
+          return;
+      }
+      if (tempUser) {
+          updateUserPassword(tempUser.id, newPass);
+          setForgotStep('success');
+      }
+  };
+
+  const closeForgotModal = () => {
+      setShowForgotModal(false);
+      setForgotUserId('');
+      setForgotStep('input');
+      setOtpInput('');
+      setNewPass('');
+      setConfirmPass('');
+      setResetError('');
+      setTempUser(null);
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen px-6 py-10 relative overflow-hidden">
       
+      {/* Forgot Password Modal */}
+      {showForgotModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-in fade-in">
+              <div className="bg-white rounded-2xl w-full max-w-xs p-6 shadow-2xl relative">
+                  <button onClick={closeForgotModal} className="absolute top-4 right-4 p-1 hover:bg-slate-100 rounded-full transition-colors">
+                      <X className="w-5 h-5 text-slate-400" />
+                  </button>
+
+                  {forgotStep === 'input' && (
+                      <div className="space-y-4">
+                          <div className="flex items-center gap-3 mb-2">
+                              <div className="bg-brand-100 p-2 rounded-lg text-brand-600">
+                                  <KeyRound className="w-6 h-6" />
+                              </div>
+                              <h3 className="text-lg font-bold text-slate-800">Reset Password</h3>
+                          </div>
+                          <p className="text-xs text-slate-500 mb-4">
+                              Enter your User ID to receive a verification code on your registered mobile.
+                          </p>
+                          <form onSubmit={handleIdSubmit}>
+                              <div className="space-y-4">
+                                  <div>
+                                      <label className="text-xs font-bold text-slate-600 uppercase mb-1 block">User ID</label>
+                                      <input 
+                                          type="text" 
+                                          className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
+                                          value={forgotUserId}
+                                          onChange={(e) => setForgotUserId(e.target.value)}
+                                          placeholder="Enter your ID"
+                                          autoFocus
+                                      />
+                                  </div>
+                                  {resetError && <p className="text-xs text-red-600 font-bold">{resetError}</p>}
+                                  <button type="submit" className="w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95">
+                                      Send OTP
+                                  </button>
+                              </div>
+                          </form>
+                      </div>
+                  )}
+
+                  {forgotStep === 'otp' && (
+                       <div className="space-y-4 animate-in slide-in-from-right-8">
+                           <div className="flex items-center gap-3 mb-2">
+                               <div className="bg-purple-100 p-2 rounded-lg text-purple-600">
+                                   <Smartphone className="w-6 h-6" />
+                               </div>
+                               <h3 className="text-lg font-bold text-slate-800">Verify OTP</h3>
+                           </div>
+                           <p className="text-xs text-slate-500 mb-4">
+                               Enter the 4-digit code sent to mobile ending in **{tempUser?.phone.slice(-4) || '****'}.
+                           </p>
+                           <form onSubmit={handleOtpSubmit}>
+                               <div className="space-y-4">
+                                   <div>
+                                       <label className="text-xs font-bold text-slate-600 uppercase mb-1 block">One Time Password</label>
+                                       <input 
+                                           type="text" 
+                                           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all tracking-widest text-center text-lg font-bold"
+                                           value={otpInput}
+                                           onChange={(e) => setOtpInput(e.target.value)}
+                                           placeholder="----"
+                                           maxLength={4}
+                                           autoFocus
+                                       />
+                                   </div>
+                                   {resetError && <p className="text-xs text-red-600 font-bold">{resetError}</p>}
+                                   <button type="submit" className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95">
+                                       Verify Code
+                                   </button>
+                               </div>
+                           </form>
+                       </div>
+                  )}
+
+                  {forgotStep === 'reset' && (
+                       <div className="space-y-4 animate-in slide-in-from-right-8">
+                           <div className="flex items-center gap-3 mb-2">
+                               <div className="bg-green-100 p-2 rounded-lg text-green-600">
+                                   <LockKeyhole className="w-6 h-6" />
+                               </div>
+                               <h3 className="text-lg font-bold text-slate-800">New Password</h3>
+                           </div>
+                           <p className="text-xs text-slate-500 mb-4">
+                               Create a new password for <strong>{tempUser?.name}</strong>.
+                           </p>
+                           <form onSubmit={handleResetSubmit}>
+                               <div className="space-y-4">
+                                   <div>
+                                       <input 
+                                           type="password" 
+                                           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all mb-2"
+                                           value={newPass}
+                                           onChange={(e) => setNewPass(e.target.value)}
+                                           placeholder="New Password"
+                                           autoFocus
+                                       />
+                                       <input 
+                                           type="password" 
+                                           className="w-full border border-slate-300 rounded-lg px-3 py-2 text-slate-800 outline-none focus:border-brand-500 focus:ring-2 focus:ring-brand-200 transition-all"
+                                           value={confirmPass}
+                                           onChange={(e) => setConfirmPass(e.target.value)}
+                                           placeholder="Confirm Password"
+                                       />
+                                   </div>
+                                   {resetError && <p className="text-xs text-red-600 font-bold">{resetError}</p>}
+                                   <button type="submit" className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-xl shadow-md transition-all active:scale-95">
+                                       Set Password
+                                   </button>
+                               </div>
+                           </form>
+                       </div>
+                  )}
+
+                  {forgotStep === 'success' && (
+                      <div className="text-center py-4 animate-in zoom-in-95">
+                          <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                              <Check className="w-6 h-6 text-green-600" />
+                          </div>
+                          <h3 className="text-lg font-bold text-slate-800 mb-2">Password Reset!</h3>
+                          <p className="text-xs text-slate-500 mb-6">
+                              Your password has been successfully updated. You can now login with your new credentials.
+                          </p>
+                          <button onClick={closeForgotModal} className="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-xl transition-colors">
+                              Back to Login
+                          </button>
+                      </div>
+                  )}
+              </div>
+          </div>
+      )}
+
       {/* Decorative Background Elements */}
       <div className="absolute top-[-10%] left-[-10%] w-64 h-64 bg-purple-500/30 rounded-full blur-3xl" />
       <div className="absolute bottom-[-10%] right-[-10%] w-64 h-64 bg-blue-500/30 rounded-full blur-3xl" />
@@ -79,6 +281,17 @@ export const Login: React.FC = () => {
             </div>
           </div>
 
+          {/* Forgot Password Link */}
+          <div className="flex justify-end">
+              <button 
+                type="button" 
+                onClick={() => setShowForgotModal(true)}
+                className="text-[10px] font-bold text-white/80 hover:text-white underline decoration-white/30 hover:decoration-white transition-all"
+              >
+                  Forgot Password?
+              </button>
+          </div>
+
           {error && (
             <div className="flex items-center gap-2 text-red-50 text-xs font-bold bg-red-500/50 px-4 py-3 rounded-xl border border-red-200/20 backdrop-blur-md animate-in slide-in-from-top-2">
               <div className="w-1.5 h-1.5 rounded-full bg-red-200" />
@@ -94,23 +307,6 @@ export const Login: React.FC = () => {
             <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </button>
         </form>
-
-        {/* Demo Credentials */}
-        <div className="w-full mt-8 border-t border-white/10 pt-4">
-            <p className="text-center text-white/50 text-[10px] font-bold mb-3 uppercase tracking-widest">
-              Demo Access
-            </p>
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-white/70 font-mono">
-              <div className="bg-black/10 p-2 rounded-lg text-center border border-white/5">
-                 <div className="opacity-50 mb-1">Super Admin</div>
-                 <div className="text-white font-bold">admin</div>
-              </div>
-              <div className="bg-black/10 p-2 rounded-lg text-center border border-white/5">
-                 <div className="opacity-50 mb-1">User</div>
-                 <div className="text-white font-bold">10190758-WEA</div>
-              </div>
-            </div>
-        </div>
       </div>
       
       <p className="absolute bottom-4 text-white/40 text-[10px] font-medium">© 2025 Panchayat Raj Dept</p>
