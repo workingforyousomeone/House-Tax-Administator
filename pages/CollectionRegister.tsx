@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowLeft, Filter, IndianRupee, Calendar, User } from 'lucide-react';
+import { Search, ArrowLeft, Filter, IndianRupee, Calendar, User, QrCode, Banknote, CreditCard } from 'lucide-react';
 import { getAllPayments } from '../services/data';
 import { AuthContext } from '../App';
 
@@ -20,6 +20,12 @@ export const CollectionRegister: React.FC = () => {
   );
 
   const totalCollectedToday = filteredPayments.reduce((sum, p) => sum + p.amount, 0);
+
+  const getPaymentModeIcon = (mode: string) => {
+    if (mode.toLowerCase().includes('upi') || mode.toLowerCase().includes('qr')) return <QrCode className="w-3 h-3" />;
+    if (mode.toLowerCase().includes('cash')) return <Banknote className="w-3 h-3" />;
+    return <CreditCard className="w-3 h-3" />;
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -77,14 +83,19 @@ export const CollectionRegister: React.FC = () => {
                         <div className="flex justify-between items-start">
                              <div className="flex-1 pr-2">
                                  <h3 className="text-sm font-bold text-slate-900 leading-tight">{p.ownerName}</h3>
-                                 <div className="flex items-center gap-1 text-xs text-slate-600 mt-0.5">
-                                     <User className="w-3 h-3" />
-                                     <span>#{p.assessmentNumber}</span>
+                                 <div className="flex flex-wrap items-center gap-2 mt-1">
+                                     <div className="flex items-center gap-1 text-xs text-slate-600">
+                                         <User className="w-3 h-3" />
+                                         <span>#{p.assessmentNumber}</span>
+                                     </div>
+                                     <div className="flex items-center gap-1 text-[9px] font-bold text-slate-700 bg-white/50 px-1.5 py-0.5 rounded border border-white/30 uppercase">
+                                        {getPaymentModeIcon(p.paymentMode)}
+                                        <span>{p.paymentMode}</span>
+                                     </div>
                                  </div>
                              </div>
-                             <div className="text-right shrink-0">
+                             <div className="text-right shrink-0 self-center">
                                  <p className="text-lg font-bold text-green-700">₹{p.amount}</p>
-                                 <p className="text-[9px] font-medium text-slate-500 uppercase tracking-wide bg-slate-100 rounded px-1 inline-block">{p.paymentMode}</p>
                              </div>
                         </div>
                     </div>

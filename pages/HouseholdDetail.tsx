@@ -6,7 +6,8 @@ import {
   LayoutGrid, Hammer, RefreshCcw, Gift, Trash2, Milestone, Pencil, ChevronDown, Check, X, 
   AlertCircle, ShieldAlert, Calculator, Printer, IndianRupee, CreditCard, Home, 
   Smartphone, UserCheck, Map, Key, CalendarClock, Building2, Ruler, Compass, 
-  FileBadge, Receipt, Wallet, CalendarDays, Lock, ScanLine, LandPlot, Eye, EyeOff
+  FileBadge, Receipt, Wallet, CalendarDays, Lock, ScanLine, LandPlot, Eye, EyeOff,
+  Coins, Banknote
 } from 'lucide-react';
 import { getHouseholdById, updateHousehold } from '../services/data';
 import { AuthContext } from '../App';
@@ -29,15 +30,17 @@ const MODE_OF_ACQUISITION_OPTIONS = ["Legal Owner", "Legal Heir", "Mortgage", "R
 
 // --- HELPER COMPONENTS ---
 
-const InfoItem: React.FC<{ icon: React.ReactNode; label: string; value: string | number | undefined; color: string }> = ({ icon, label, value, color }) => (
-  <div className="flex flex-col bg-white/40 p-2 rounded-xl border border-white/30 shadow-sm relative overflow-hidden group hover:bg-white/60 transition-colors">
+const InfoItem: React.FC<{ icon: React.ReactNode; label: string; value: string | number | React.ReactNode | undefined; color: string }> = ({ icon, label, value, color }) => (
+  <div className="flex flex-col bg-white/40 p-2 rounded-xl border border-white/30 shadow-sm relative overflow-hidden group hover:bg-white/60 transition-colors h-full">
      <div className="flex items-center gap-2 mb-1">
-         <div className={`p-1 rounded-md ${color} text-white shadow-sm`}>
+         <div className={`p-1 rounded-md ${color} text-white shadow-sm shrink-0`}>
             {React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-3 h-3' })}
          </div>
-         <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">{label}</span>
+         <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wide leading-tight">{label}</span>
      </div>
-     <span className="text-xs font-bold text-slate-800 truncate pl-1" title={String(value || '')}>{value || '-'}</span>
+     <div className="text-xs font-bold text-slate-800 truncate pl-1" title={typeof value === 'string' ? value : ''}>
+       {value || '-'}
+     </div>
   </div>
 );
 
@@ -239,10 +242,7 @@ const generateChanges = (original: any, modified: any): string[] => {
 };
 
 // Helper for currency formatting
-const formatCapVal = (val: number) => {
-  if (!val) return '0';
-  if (val >= 100000) return `₹${(val / 100000).toFixed(2)}L`;
-  if (val >= 1000) return `₹${(val / 1000).toFixed(1)}k`;
+const formatFullCurrency = (val: number) => {
   return `₹${val.toLocaleString()}`;
 };
 
@@ -307,6 +307,18 @@ export const HouseholdDetail: React.FC = () => {
   const currentData = isEditMode ? tempData! : data;
 
   const siteArea = data.siteLength * data.siteBreadth;
+
+  const getDemandBreakdown = (d: DemandDetail) => {
+    const parts = [];
+    if (d.propertyTax) parts.push(`${d.propertyTax}(PT)`);
+    if (d.libraryCess) parts.push(`${d.libraryCess}(LC)`);
+    if (d.waterTax) parts.push(`${d.waterTax}(WT)`);
+    if (d.lightingTax) parts.push(`${d.lightingTax}(LT)`);
+    if (d.drainageTax) parts.push(`${d.drainageTax}(DT)`);
+    if (d.sportsCess) parts.push(`${d.sportsCess}(SC)`);
+    if (d.fireTax) parts.push(`${d.fireTax}(FT)`);
+    return parts.join(', ');
+  };
 
   return (
     <div className="pb-6">
@@ -376,14 +388,23 @@ export const HouseholdDetail: React.FC = () => {
         <SectionHeader icon={<Maximize />} title="Measurements & Boundaries" />
         <div className="grid grid-cols-3 gap-2 mb-3">
              {/* New Dimensions Cards */}
-             <InfoItem icon={<Ruler />} label="Site (L x B)" value={`${data.siteLength} x ${data.siteBreadth}`} color="bg-cyan-600" />
-             <InfoItem icon={<Ruler />} label="Build (L x B)" value={`${data.floorLength} x ${data.floorBreadth}`} color="bg-cyan-700" />
+             <InfoItem icon={<Ruler />} label="Site (L x B) SqYd" value={`${data.siteLength} x ${data.siteBreadth}`} color="bg-cyan-600" />
+             <InfoItem icon={<Ruler />} label="Build (L x B) SqFt" value={`${data.floorLength} x ${data.floorBreadth}`} color="bg-cyan-700" />
              {/* Combined Area Card */}
-             <InfoItem icon={<Maximize />} label="Area (Site/Flr)" value={`${Math.round(siteArea)} / ${data.totalFloorArea}`} color="bg-emerald-600" />
+             <InfoItem 
+                icon={<Maximize />} 
+                label="Area" 
+                value={
+                    <span>
+                        {Math.round(siteArea)} <span className="text-[8px] opacity-70">SqYd</span> / {data.totalFloorArea} <span className="text-[8px] opacity-70">SqFt</span>
+                    </span>
+                }
+                color="bg-emerald-600" 
+             />
              
-             {/* Split Capital Value Cards */}
-             <InfoItem icon={<IndianRupee />} label="Site Val (SqYd)" value={formatCapVal(data.siteCapitalValue)} color="bg-lime-600" />
-             <InfoItem icon={<IndianRupee />} label="Bld Val (SqFt)" value={formatCapVal(data.buildingCapitalValue)} color="bg-green-600" />
+             {/* Split Capital Value Cards - UPDATED LABELS & ICONS & FULL VALUES */}
+             <InfoItem icon={<Coins />} label="Site Cap Val" value={formatFullCurrency(data.siteCapitalValue)} color="bg-lime-600" />
+             <InfoItem icon={<Banknote />} label="Build Cap Val" value={formatFullCurrency(data.buildingCapitalValue)} color="bg-green-600" />
              
              <InfoItem icon={<Compass />} label="North" value={data.boundaries.north} color="bg-slate-400" />
              <InfoItem icon={<Compass />} label="South" value={data.boundaries.south} color="bg-slate-400" />
@@ -408,26 +429,41 @@ export const HouseholdDetail: React.FC = () => {
             </div>
         </div>
 
-        {/* Tables (Compact) */}
-        <div className="space-y-3">
-            <div>
-                 <p className="text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Demand History</p>
-                 <div className="overflow-x-auto rounded-lg border border-white/30 bg-white/20">
-                     <table className="w-full text-[10px]">
-                         <thead className="bg-white/30 text-slate-600 uppercase"><tr><th className="px-2 py-1 text-left">Year</th><th className="px-2 py-1 text-right">Tax</th><th className="px-2 py-1 text-right">Total</th></tr></thead>
-                         <tbody className="divide-y divide-white/20">{data.demandDetails.map((d, i) => <tr key={i}><td className="px-2 py-1 font-medium">{d.demandYear}</td><td className="px-2 py-1 text-right">₹{d.propertyTax}</td><td className="px-2 py-1 text-right font-bold">₹{d.totalDemand}</td></tr>)}</tbody>
-                     </table>
-                 </div>
-            </div>
+        {/* Timelines (Compact) */}
+        <div className="space-y-4">
             
-            {/* TIMELINE SECTION */}
+            {/* DEMAND HISTORY TIMELINE */}
+            <div>
+                 <p className="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-1">Demand History</p>
+                 <div className="pl-2 border-l-2 border-white/30 ml-2 space-y-3 py-1">
+                    {data.demandDetails.map((d, i) => (
+                        <div key={i} className="relative pl-4 group" onClick={() => handleDemandRowClick(i)}>
+                             {/* Dot */}
+                            <div className="absolute -left-[5px] top-1.5 w-2 h-2 bg-white rounded-full ring-2 ring-red-400 group-hover:bg-red-500 transition-colors" />
+                            
+                            {/* Layout matching Lifecycle History */}
+                            <div className={`flex justify-between items-start ${isEditMode ? 'cursor-pointer' : ''}`}>
+                                <div className="pr-2 flex-1">
+                                    <p className="text-[10px] font-bold text-slate-800 leading-tight">{d.demandYear}</p>
+                                    <p className="text-[9px] text-slate-600 leading-tight mt-0.5 break-all">{getDemandBreakdown(d)}</p>
+                                </div>
+                                <span className="text-[9px] font-mono font-bold text-slate-700 bg-white/40 px-1.5 py-0.5 rounded border border-white/30 whitespace-nowrap ml-2">
+                                    ₹{d.totalDemand}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* LIFECYCLE TIMELINE */}
             {data.history && data.history.length > 0 && (
                 <div>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Property Lifecycle Timeline</p>
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-1">Property Lifecycle History</p>
                      <div className="pl-2 border-l-2 border-white/30 ml-2 space-y-3 py-1">
                         {data.history.map((event, idx) => (
                             <div key={idx} className="relative pl-4 group">
-                                <div className="absolute -left-[5px] top-1.5 w-2 h-2 bg-white rounded-full ring-2 ring-slate-300 group-hover:bg-brand-500 transition-colors" />
+                                <div className="absolute -left-[5px] top-1.5 w-2 h-2 bg-white rounded-full ring-2 ring-blue-400 group-hover:bg-brand-500 transition-colors" />
                                 <div className="flex justify-between items-start">
                                     <div className="pr-2">
                                         <p className="text-[10px] font-bold text-slate-800 leading-tight">{event.eventType}</p>
@@ -441,38 +477,30 @@ export const HouseholdDetail: React.FC = () => {
                 </div>
             )}
 
-            {/* PAYMENT HISTORY SECTION */}
+            {/* PAYMENT HISTORY TIMELINE */}
             {groupedPayments.length > 0 && (
                 <div>
-                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-1 ml-1">Payment History</p>
-                     <div className="overflow-x-auto rounded-lg border border-white/30 bg-white/20">
-                         <table className="w-full text-[10px]">
-                             <thead className="bg-white/30 text-slate-600 uppercase">
-                                <tr>
-                                    <th className="px-2 py-1 text-left">Date</th>
-                                    <th className="px-2 py-1 text-left">Receipt</th>
-                                    <th className="px-2 py-1 text-left">Mode</th>
-                                    <th className="px-2 py-1 text-right">Amt</th>
-                                </tr>
-                             </thead>
-                             <tbody className="divide-y divide-white/20">
-                                {groupedPayments.map((p, i) => (
-                                   <tr key={i} className="hover:bg-white/10 transition-colors">
-                                       <td className="px-2 py-1 font-medium text-slate-800">{p.dateOfPayment}</td>
-                                       <td className="px-2 py-1">
-                                           <button 
-                                             onClick={() => openReceipt(p.receiptNo)}
-                                             className="text-brand-700 font-mono hover:underline flex items-center gap-1"
-                                           >
-                                             {p.receiptNo.slice(-8)}...
-                                           </button>
-                                       </td>
-                                       <td className="px-2 py-1 text-slate-600 font-medium">{p.paymentMode}</td>
-                                       <td className="px-2 py-1 text-right font-bold text-green-700">₹{p.totalAmount}</td>
-                                   </tr>
-                                ))}
-                             </tbody>
-                         </table>
+                     <p className="text-[10px] font-bold text-slate-500 uppercase mb-2 ml-1">Payment History</p>
+                     <div className="pl-2 border-l-2 border-white/30 ml-2 space-y-3 py-1">
+                        {groupedPayments.map((p, i) => (
+                           <div key={i} className="relative pl-4 group">
+                               <div className="absolute -left-[5px] top-1.5 w-2 h-2 bg-white rounded-full ring-2 ring-green-500 group-hover:bg-green-600 transition-colors" />
+                               
+                               <div 
+                                 onClick={() => openReceipt(p.receiptNo)}
+                                 className="flex justify-between items-start cursor-pointer -m-1 p-1 rounded hover:bg-white/30 transition-colors"
+                               >
+                                   <div className="pr-2 flex-1">
+                                       <p className="text-[10px] font-bold text-slate-800 leading-tight">{p.receiptNo}</p>
+                                       <p className="text-[9px] text-slate-600 leading-tight mt-0.5">Paid via {p.paymentMode}</p>
+                                   </div>
+                                   <div className="text-right whitespace-nowrap pl-2">
+                                       <p className="text-[10px] font-bold text-green-700 leading-tight">₹{p.totalAmount}</p>
+                                       <p className="text-[9px] font-mono text-slate-500 mt-0.5">{p.dateOfPayment}</p>
+                                   </div>
+                               </div>
+                           </div>
+                        ))}
                      </div>
                 </div>
             )}

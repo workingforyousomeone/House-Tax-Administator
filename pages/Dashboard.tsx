@@ -162,7 +162,7 @@ export const Dashboard: React.FC = () => {
 
       {/* Page Title Section */}
       <div className="px-1 animate-in fade-in slide-in-from-top-4 duration-500">
-        <h1 className="text-lg font-bold text-slate-900 leading-tight">House Tax Dashboard</h1>
+        <h1 className="text-2xl font-bold text-slate-900 leading-tight">Dashboard</h1>
         <p className="text-slate-700 text-[10px] font-bold opacity-70">
             {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'}, {user?.name.split(' ')[0]}
         </p>

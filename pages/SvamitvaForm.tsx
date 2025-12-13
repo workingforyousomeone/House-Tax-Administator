@@ -82,12 +82,9 @@ export const SvamitvaForm: React.FC = () => {
   const [viewMode, setViewMode] = useState<'form' | 'list'>('form');
   const [saved, setSaved] = useState(false);
   const [formData, setFormData] = useState(INITIAL_STATE);
-  const [records, setRecords] = useState<any[]>([]);
-
-  // Load from store on mount
-  useEffect(() => {
-    setRecords(getSvamitvaRecords());
-  }, []);
+  
+  // Initialize from storage directly to ensure data is present on first render
+  const [records, setRecords] = useState<any[]>(() => getSvamitvaRecords());
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
      const { name, value } = e.target;
@@ -107,7 +104,7 @@ export const SvamitvaForm: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       
-      // Save Record via Service
+      // Save Record via Service (which persists to localStorage)
       const updatedList = addSvamitvaRecord(formData);
       setRecords(updatedList);
 
@@ -148,7 +145,11 @@ export const SvamitvaForm: React.FC = () => {
         {/* Header */}
         <div className="px-4 py-3 bg-white/30 backdrop-blur-md border-b border-white/20 shadow-sm sticky top-0 z-20 flex justify-between items-center shrink-0">
              <div className="flex items-center gap-3">
-                 <button onClick={() => navigate(-1)} className="p-1 hover:bg-white/40 rounded-full transition-colors">
+                 <button 
+                    type="button" 
+                    onClick={() => navigate('/dashboard')} 
+                    className="p-1 hover:bg-white/40 rounded-full transition-colors"
+                 >
                     <ArrowLeft className="w-6 h-6 text-slate-800" />
                  </button>
                  <h1 className="text-lg font-bold text-slate-900">Svamitva Register</h1>
@@ -157,12 +158,14 @@ export const SvamitvaForm: React.FC = () => {
              {/* View Toggle */}
              <div className="flex bg-white/40 p-1 rounded-lg border border-white/30">
                  <button 
+                    type="button"
                     onClick={() => setViewMode('form')}
                     className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 transition-all ${viewMode === 'form' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white/30'}`}
                  >
                     <PlusCircle className="w-3 h-3" /> Entry
                  </button>
                  <button 
+                    type="button"
                     onClick={() => setViewMode('list')}
                     className={`px-3 py-1.5 rounded-md text-xs font-bold flex items-center gap-1 transition-all ${viewMode === 'list' ? 'bg-brand-600 text-white shadow-sm' : 'text-slate-600 hover:bg-white/30'}`}
                  >
@@ -356,7 +359,7 @@ export const SvamitvaForm: React.FC = () => {
                             <p className="text-white font-medium">No records saved in storage.</p>
                             <p className="text-white/60 text-xs mt-2">Try importing a backup if you have one.</p>
                             <div className="flex justify-center gap-3 mt-4">
-                                <button onClick={() => setViewMode('form')} className="text-brand-700 font-bold bg-white/50 px-4 py-2 rounded-lg hover:bg-white/70">
+                                <button type="button" onClick={() => setViewMode('form')} className="text-brand-700 font-bold bg-white/50 px-4 py-2 rounded-lg hover:bg-white/70">
                                     Add New Entry
                                 </button>
                                 <label className="text-brand-700 font-bold bg-white/50 px-4 py-2 rounded-lg hover:bg-white/70 cursor-pointer flex items-center gap-1">
@@ -373,6 +376,7 @@ export const SvamitvaForm: React.FC = () => {
                                     <input type="file" accept=".json" onChange={handleImport} className="hidden" />
                                 </label>
                                 <button 
+                                    type="button"
                                     onClick={downloadSvamitvaData}
                                     className="bg-green-600 text-white px-4 py-2 rounded-xl text-sm font-bold shadow-md hover:bg-green-700 flex items-center gap-2 transition-colors"
                                 >
