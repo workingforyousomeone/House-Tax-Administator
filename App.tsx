@@ -8,6 +8,7 @@ import { Clusters } from './pages/Clusters';
 import { HouseholdList } from './pages/HouseholdList';
 import { HouseholdDetail } from './pages/HouseholdDetail';
 import { SvamitvaForm } from './pages/SvamitvaForm';
+import { CollectionRegister } from './pages/CollectionRegister';
 import { User as UserType } from './types';
 import { getHouseholdById } from './services/data';
 
@@ -31,6 +32,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const isDetailPage = location.pathname.includes('/household/');
   const isClusterDetail = location.pathname.includes('/cluster/');
   const isSvamitva = location.pathname === '/svamitva';
+  const isRegister = location.pathname === '/register';
   const isDashboard = location.pathname === '/dashboard';
   const isClusters = location.pathname === '/clusters';
 
@@ -58,7 +60,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <div className="min-h-screen flex flex-col relative max-w-md mx-auto overflow-hidden">
       {/* Dynamic Header */}
-      {!location.pathname.includes('/login') && !isSvamitva && (
+      {!location.pathname.includes('/login') && !isSvamitva && !isRegister && (
         <header className="px-4 py-3 flex justify-between items-center z-10 sticky top-0 bg-white/30 backdrop-blur-md border-b border-white/20 shadow-sm">
           <div className="flex items-center gap-3">
             {(isDetailPage || isClusterDetail) ? (
@@ -99,7 +101,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       </main>
 
       {/* Bottom Navigation */}
-      {!location.pathname.includes('/login') && !isDetailPage && !isSvamitva && (
+      {!location.pathname.includes('/login') && !isDetailPage && !isSvamitva && !isRegister && (
         <nav className="absolute bottom-0 w-full bg-white/30 backdrop-blur-md border-t border-white/20 flex justify-around py-3 z-20 pb-safe shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
           <button 
             onClick={() => navigate('/dashboard')}
@@ -140,6 +142,7 @@ export default function App() {
           <Route path="/cluster/:id" element={isAuthenticated ? <Layout><HouseholdList /></Layout> : <Navigate to="/login" />} />
           <Route path="/household/:id" element={isAuthenticated ? <Layout><HouseholdDetail /></Layout> : <Navigate to="/login" />} />
           <Route path="/svamitva" element={isAuthenticated ? <Layout><SvamitvaForm /></Layout> : <Navigate to="/login" />} />
+          <Route path="/register" element={isAuthenticated ? <Layout><CollectionRegister /></Layout> : <Navigate to="/login" />} />
           
           <Route path="*" element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} />
         </Routes>

@@ -1,7 +1,7 @@
 
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Home, TrendingUp, IndianRupee, TrendingDown, Users, LayoutGrid, FileText, CreditCard, Search, X, ChevronRight } from 'lucide-react';
+import { Home, TrendingUp, IndianRupee, TrendingDown, Users, LayoutGrid, FileText, CreditCard, Search, X, ChevronRight, ClipboardList } from 'lucide-react';
 import { getDashboardStats, getClustersForUser, searchHouseholds } from '../services/data';
 import { AuthContext } from '../App';
 import { PaymentModal } from '../components/PaymentModal';
@@ -19,6 +19,32 @@ export const Dashboard: React.FC = () => {
   const [searchResults, setSearchResults] = useState<Household[]>([]);
   const [selectedHousehold, setSelectedHousehold] = useState<Household | null>(null);
 
+  // Time-based Background Gradient Effect
+  useEffect(() => {
+    const updateGradient = () => {
+        const hour = new Date().getHours();
+        let gradient = 'linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%)'; // Default (Afternoon: 12-17)
+
+        if (hour >= 5 && hour < 12) {
+           // Morning: Fresh & Bright (Soft Blue -> Lavender)
+           gradient = 'linear-gradient(62deg, #8EC5FC 0%, #E0C3FC 100%)';
+        } else if (hour >= 17 || hour < 5) {
+           // Evening/Night: Deep & Rich (Midnight Blue -> Purple)
+           gradient = 'linear-gradient(to top, #30cfd0 0%, #330867 100%)'; 
+        }
+
+        document.body.style.backgroundImage = gradient;
+        document.body.style.transition = 'background-image 1s ease-in-out';
+    };
+
+    updateGradient();
+    
+    // Cleanup to default CSS style when leaving dashboard
+    return () => {
+        document.body.style.backgroundImage = 'linear-gradient(43deg, #4158D0 0%, #C850C0 46%, #FFCC70 100%)';
+    };
+  }, []);
+
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const q = e.target.value;
     setSearchQuery(q);
@@ -27,12 +53,10 @@ export const Dashboard: React.FC = () => {
 
   const openPaymentFor = (h: Household) => {
     setSelectedHousehold(h);
-    // Don't close search modal immediately, or handle stacking. 
-    // Here we can close search modal to show payment modal clearly.
     setShowSearchModal(false); 
   };
 
-  // Reusable Card Component for uniform look
+  // Reusable Card Component with Animation
   const Card: React.FC<{ 
     label: string; 
     value?: string; 
@@ -43,14 +67,16 @@ export const Dashboard: React.FC = () => {
     onClick?: () => void;
     rightElement?: React.ReactNode;
     children?: React.ReactNode;
-  }> = ({ label, value, subLabel, icon, iconBg, iconColor, onClick, rightElement, children }) => (
+    index: number; // For animation delay
+  }> = ({ label, value, subLabel, icon, iconBg, iconColor, onClick, rightElement, children, index }) => (
     <div 
       onClick={onClick}
-      className={`bg-white/60 backdrop-blur-md p-2.5 rounded-2xl shadow-lg border border-white/50 flex flex-col justify-center gap-1 hover:bg-white/70 transition-all h-full min-h-[75px] relative overflow-hidden ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
+      style={{ animationDelay: `${index * 100}ms` }}
+      className={`bg-white/60 backdrop-blur-md p-2.5 rounded-2xl shadow-lg border border-white/50 flex flex-col justify-center gap-1 hover:bg-white/70 transition-all h-full min-h-[75px] relative overflow-hidden animate-in fade-in slide-in-from-bottom-8 duration-700 fill-mode-backwards ${onClick ? 'cursor-pointer active:scale-95' : ''}`}
     >
       <div className="flex justify-between items-start">
          <div className="flex items-center gap-2">
-            <div className={`p-1.5 rounded-lg ${iconBg} ${iconColor} shadow-sm shrink-0`}>
+            <div className={`p-1.5 rounded-lg ${iconBg} ${iconColor} shadow-sm shrink-0 transition-transform duration-500 hover:scale-110`}>
               {React.isValidElement(icon) 
                 ? React.cloneElement(icon as React.ReactElement<{ className?: string }>, { className: 'w-4 h-4' })
                 : icon}
@@ -74,8 +100,8 @@ export const Dashboard: React.FC = () => {
       
       {/* Search Modal */}
       {showSearchModal && (
-        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-start justify-center pt-20 px-4 animate-in fade-in">
-             <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh]">
+        <div className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-start justify-center pt-20 px-4 animate-in fade-in duration-200">
+             <div className="bg-white w-full max-w-md rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[70vh] animate-in zoom-in-95 duration-200">
                  <div className="p-4 border-b flex items-center gap-3">
                      <Search className="w-5 h-5 text-slate-400" />
                      <input 
@@ -86,7 +112,7 @@ export const Dashboard: React.FC = () => {
                         value={searchQuery}
                         onChange={handleSearch}
                      />
-                     <button onClick={() => setShowSearchModal(false)} className="p-1 bg-slate-100 rounded-full">
+                     <button onClick={() => setShowSearchModal(false)} className="p-1 bg-slate-100 rounded-full hover:bg-slate-200 transition-colors">
                          <X className="w-4 h-4 text-slate-600" />
                      </button>
                  </div>
@@ -134,14 +160,17 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Page Title Section */}
-      <div className="px-1">
+      <div className="px-1 animate-in fade-in slide-in-from-top-4 duration-500">
         <h1 className="text-lg font-bold text-slate-900 leading-tight">House Tax Dashboard</h1>
-        <p className="text-slate-600 text-[10px] font-medium">Overview of all tax collections</p>
+        <p className="text-slate-700 text-[10px] font-bold opacity-70">
+            {new Date().getHours() < 12 ? 'Good Morning' : new Date().getHours() < 17 ? 'Good Afternoon' : 'Good Evening'}, {user?.name.split(' ')[0]}
+        </p>
       </div>
 
       {/* Primary Stats Grid */}
       <div className="grid grid-cols-2 gap-2.5">
         <Card 
+          index={0}
           label="Households" 
           value={stats.totalHouseholds.toLocaleString()} 
           icon={<Home />} 
@@ -149,14 +178,16 @@ export const Dashboard: React.FC = () => {
           iconColor="text-blue-600"
         />
         <Card 
+          index={1}
           label="Total Demand" 
-          value={`₹${(stats.totalDemand / 100000).toFixed(2)}L`} // Formatted for space
+          value={`₹${(stats.totalDemand / 100000).toFixed(2)}L`} 
           subLabel={`₹${stats.totalDemand.toLocaleString()}`}
           icon={<TrendingUp />}
           iconBg="bg-green-100"
           iconColor="text-green-600"
         />
         <Card 
+          index={2}
           label="Collected" 
           value={`₹${(stats.totalCollection / 100000).toFixed(2)}L`}
           subLabel={`₹${stats.totalCollection.toLocaleString()}`}
@@ -165,6 +196,7 @@ export const Dashboard: React.FC = () => {
           iconColor="text-purple-600"
         />
         <Card 
+          index={3}
           label="Pending" 
           value={`₹${(stats.pendingAmount / 100000).toFixed(2)}L`}
           subLabel={`₹${stats.pendingAmount.toLocaleString()}`}
@@ -174,11 +206,12 @@ export const Dashboard: React.FC = () => {
         />
       </div>
 
-      {/* Actions & Secondary Stats Grid - Consistent Height & Style */}
+      {/* Actions & Secondary Stats Grid */}
       <div className="grid grid-cols-2 gap-2.5">
         
         {/* Clusters */}
         <Card
+            index={4}
             label="Clusters"
             subLabel="View Zones"
             icon={<LayoutGrid />}
@@ -190,6 +223,7 @@ export const Dashboard: React.FC = () => {
 
         {/* Make Payment */}
         <Card
+            index={5}
             label="Pay Tax"
             subLabel="Record Payment"
             icon={<CreditCard />}
@@ -199,24 +233,21 @@ export const Dashboard: React.FC = () => {
             rightElement={<div className="bg-brand-50 rounded-full p-0.5"><ChevronRight className="w-3.5 h-3.5 text-brand-400" /></div>}
         />
 
-        {/* Collection Rate */}
+        {/* Register (New) */}
         <Card
-            label="Collection Rate"
-            subLabel="Progress"
-            icon={<TrendingUp />}
-            iconBg="bg-teal-100"
-            iconColor="text-teal-600"
-        >
-            <div className="mt-1.5 flex items-center gap-2">
-                <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
-                    <div className="h-full bg-teal-500 rounded-full" style={{ width: `${stats.collectionRate}%` }}></div>
-                </div>
-                <span className="text-xs font-bold text-slate-700">{stats.collectionRate}%</span>
-            </div>
-        </Card>
+            index={6}
+            label="Register"
+            subLabel="All Payments"
+            icon={<ClipboardList />}
+            iconBg="bg-amber-100"
+            iconColor="text-amber-600"
+            onClick={() => navigate('/register')}
+            rightElement={<ChevronRight className="w-4 h-4 text-slate-300" />}
+        />
 
         {/* Svamitva */}
         <Card
+            index={7}
             label="Svamitva"
             subLabel="Register"
             icon={<FileText />}

@@ -296,3 +296,25 @@ export const addPayment = (householdId: string, amount: number, mode: string): P
 
   return newRecord;
 };
+
+// --- NEW HELPER: Get All Payments Globally ---
+export const getAllPayments = () => {
+  return HOUSEHOLDS.flatMap(h => 
+    h.paymentHistory.map(p => ({
+      ...p,
+      householdId: h.id,
+      ownerName: h.ownerName,
+      assessmentNumber: h.assessmentNumber,
+      clusterId: h.clusterId
+    }))
+  ).sort((a, b) => {
+    // Sort by Date Descending
+    // Format is DD-MM-YYYY
+    const [d1, m1, y1] = a.dateOfPayment.split('-').map(Number);
+    const [d2, m2, y2] = b.dateOfPayment.split('-').map(Number);
+    // Note: Month is 0-indexed in Date constructor
+    const time1 = new Date(y1, m1 - 1, d1).getTime();
+    const time2 = new Date(y2, m2 - 1, d2).getTime();
+    return time2 - time1;
+  });
+};
