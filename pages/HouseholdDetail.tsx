@@ -13,6 +13,7 @@ import { getHouseholdById, updateHousehold } from '../services/data';
 import { AuthContext } from '../App';
 import { Household, HistoryRecord, DemandDetail, AuditLog, PaymentRecord } from '../types';
 import { PaymentModal } from '../components/PaymentModal';
+import { ReceiptModal } from '../components/ReceiptModal';
 
 // --- FIXED VALUE OPTIONS ---
 const NATURE_PROPERTY_OPTIONS = ["Government", "Private", "Assigned", "Inam", "Endowment", "Wakf"];
@@ -86,81 +87,6 @@ const DetailRow: React.FC<{ label: string; value: string | number | React.ReactN
       <span className="text-sm font-bold text-right w-1/2 break-words text-slate-800">{value}</span>
     </div>
 );
-
-// --- RECEIPT MODAL ---
-interface ReceiptModalProps {
-  receiptNo: string;
-  records: PaymentRecord[];
-  household: Household;
-  onClose: () => void;
-}
-const ReceiptModal: React.FC<ReceiptModalProps> = ({ receiptNo, records, household, onClose }) => {
-    const totalAmount = records.reduce((sum, r) => sum + r.amount, 0);
-    const date = records[0]?.dateOfPayment || '';
-    const qrData = `https://swarnapanchayat.apcfss.in/HouseTaxPaymentTeluguView/House/${household.assessmentNumber}/${receiptNo}`;
-    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
-
-    const handlePrint = () => { setTimeout(() => { window.print(); }, 100); };
-
-    return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 font-telugu">
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-[350px] overflow-hidden flex flex-col max-h-[90vh]">
-                <div className="p-4 border-b flex justify-between items-center bg-slate-50 no-print">
-                    <h3 className="font-bold text-slate-800">Print Preview</h3>
-                    <div className="flex gap-2">
-                        <button type="button" onClick={handlePrint} className="p-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 flex items-center gap-1 text-xs font-bold shadow-sm"><Printer className="w-4 h-4" /> Print</button>
-                        <button onClick={onClose} className="p-2 bg-slate-200 text-slate-700 rounded-lg hover:bg-slate-300"><X className="w-4 h-4" /></button>
-                    </div>
-                </div>
-                <div id="printable-receipt" className="p-2 text-black text-[10px] leading-tight overflow-y-auto bg-white">
-                    <div className="text-center mb-2">
-                         <div className="flex justify-center items-center gap-1 mb-1">
-                             <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" className="w-6 h-6" />
-                             <div className="text-red-600 font-bold"><p className="text-[10px]">పంచాయతి రాజ్ శాఖ</p><p className="text-[8px] text-black">Panchayat Raj Dept</p></div>
-                         </div>
-                         <h2 className="font-bold text-[12px]">Pogiri గ్రామ పంచాయతీ</h2>
-                         <p className="text-[9px]">Rajam మండలం ,Vizianagaram జిల్లా</p>
-                         <p className="text-[10px] font-bold mt-1">2025-26 ఆర్థిక సంవత్సరం</p>
-                         <h1 className="text-[14px] font-bold underline mt-1">House Tax రసీదు</h1>
-                    </div>
-                    <div className="border-t border-black my-2"></div>
-                    <div className="mb-2 relative min-h-[100px]">
-                        <p className="font-bold text-[9px] text-green-700 mb-1">అసెస్మెంట్ యజమాని వివరాలు:</p>
-                        <div className="pr-28">
-                            <p><strong>అసెస్మెంట్ నెం:</strong> {household.assessmentNumber}</p>
-                            <p><strong>పాత అసెస్మెంట్ నెం:</strong> {household.oldAssessmentNumber}</p>
-                            <p><strong>యజమాని పేరు:</strong> {household.ownerName}</p>
-                            <p><strong>తండ్రి/భర్త:</strong> {household.guardianName}</p>
-                            <p><strong>ఇంటి సంఖ్య:</strong> {household.doorNumber}</p>
-                            <p><strong>మొబైల్ నంబర్:</strong> {household.mobileNumber}</p>
-                        </div>
-                        <div className="absolute top-2 right-0"><img src={qrImageUrl} alt="QR Code" className="w-24 h-24" /></div>
-                    </div>
-                    <div className="border-t border-black my-2"></div>
-                    <div className="mb-2">
-                        <p className="font-bold text-[9px] text-green-700 mb-1">రసీదు వివరాలు:</p>
-                        <div className="grid grid-cols-2 gap-1">
-                            <div><p className="text-[10px] text-slate-600">లావాదేవీ సంఖ్య:</p><p className="font-bold break-all">{receiptNo}</p></div>
-                            <div className="text-right"><p className="text-[10px] text-slate-600">లావాదేవీ తేదీ:</p><p className="font-bold">{date}</p></div>
-                            <div><p className="text-[10px] text-slate-600">చెల్లింపు విధానం:</p><p className="font-bold">{records[0]?.paymentMode}</p></div>
-                            <div className="text-right"><p className="text-[10px] text-slate-600">చెల్లింపు స్థితి:</p><p className="font-bold text-green-700">Success</p></div>
-                        </div>
-                    </div>
-                    <table className="w-full border-collapse border border-slate-400 mb-2 text-[8px]">
-                        <thead><tr className="bg-slate-100"><th className="border border-slate-400 p-1">S.No</th><th className="border border-slate-400 p-1">Year</th><th className="border border-slate-400 p-1">Category</th><th className="border border-slate-400 p-1 text-right">Amount</th></tr></thead>
-                        <tbody>
-                            {records.map((r, i) => (<tr key={i}><td className="border border-slate-400 p-1 text-center">{i+1}</td><td className="border border-slate-400 p-1 text-center">{r.dueYear}</td><td className="border border-slate-400 p-1 text-center">{r.demandCategory}</td><td className="border border-slate-400 p-1 text-right">{r.amount}</td></tr>))}
-                            <tr className="font-bold bg-slate-50"><td className="border border-slate-400 p-1 text-center" colSpan={3}>Total</td><td className="border border-slate-400 p-1 text-right">{totalAmount}</td></tr>
-                        </tbody>
-                    </table>
-                    <p className="font-bold mb-2">In Words: <span className="text-[9px] font-normal">Seven Hundred Ninety Five Rupees Only/- (Mock)</span></p>
-                    <p className="text-[8px] text-center mt-4 text-slate-500">గమనిక: ఇది కంప్యూటర్‌లో రూపొందించిన రసీదు, భౌతిక సంతకం అవసరం లేదు</p>
-                </div>
-            </div>
-            <style>{`@media print { body * { visibility: hidden; } #printable-receipt, #printable-receipt * { visibility: visible; } #printable-receipt { position: absolute; left: 0; top: 0; width: 100%; margin: 0; padding: 10px; background: white; } @page { size: auto; margin: 0mm; } .no-print { display: none !important; } }`}</style>
-        </div>
-    );
-};
 
 // --- DEMAND EDIT MODAL ---
 interface DemandEditModalProps { demand: DemandDetail; onSave: (updatedDemand: DemandDetail) => void; onClose: () => void; }

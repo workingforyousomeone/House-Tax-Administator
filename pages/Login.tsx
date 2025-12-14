@@ -1,7 +1,7 @@
 
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../App';
-import { ArrowRight, User, Lock, Home, IndianRupee, KeyRound, X, Check, AlertCircle, Smartphone, LockKeyhole } from 'lucide-react';
+import { ArrowRight, User, Lock, Home, IndianRupee, KeyRound, X, Check, AlertCircle, Smartphone, LockKeyhole, Building2 } from 'lucide-react';
 import { authenticateUser, getUser, updateUserPassword } from '../services/data';
 import { User as UserType } from '../types';
 
@@ -234,16 +234,18 @@ export const Login: React.FC = () => {
         
         {/* Logo Section - Centered at top */}
         <div className="mb-6 flex flex-col items-center">
-            <div className="relative mb-4">
-                <div className="bg-white p-4 rounded-2xl shadow-xl shadow-brand-900/10 transform rotate-3">
-                    <Home className="w-10 h-10 text-brand-600" />
+            <div className="relative mb-5 group">
+                <div className="bg-white p-5 rounded-3xl shadow-2xl shadow-brand-900/20 transform rotate-3 group-hover:rotate-0 transition-all duration-500">
+                    <Home className="w-12 h-12 text-brand-600" />
                 </div>
-                <div className="absolute -bottom-2 -right-2 bg-green-500 rounded-full p-1.5 border-4 border-white/20 shadow-lg">
-                    <IndianRupee className="w-4 h-4 text-white" />
+                <div className="absolute -bottom-2 -right-2 bg-gradient-to-tr from-green-500 to-emerald-400 rounded-xl p-2 border-4 border-white/20 shadow-lg transform group-hover:scale-110 transition-transform">
+                    <IndianRupee className="w-5 h-5 text-white stroke-[2.5]" />
                 </div>
             </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight text-center drop-shadow-md">House Tax 2026</h1>
-            <p className="text-brand-100 text-xs font-bold tracking-[0.3em] uppercase opacity-90 text-center mt-1">Admin Portal</p>
+            <h1 className="text-3xl font-bold text-white tracking-tight text-center drop-shadow-md">House Tax Admin</h1>
+            <p className="text-brand-50 text-[10px] font-bold tracking-[0.4em] uppercase opacity-80 text-center mt-2 border-t border-white/20 pt-2 w-full">
+                Administration Portal
+            </p>
         </div>
 
         {/* Form Section */}
@@ -308,7 +310,7 @@ export const Login: React.FC = () => {
         </form>
       </div>
       
-      <p className="absolute bottom-4 text-white/40 text-[10px] font-medium">© 2025 Panchayat Raj Dept</p>
+      <p className="absolute bottom-4 text-white/40 text-[10px] font-medium">© Panchayat Raj Dept</p>
     </div>
   );
 };

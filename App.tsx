@@ -140,7 +140,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative max-w-md mx-auto overflow-hidden">
+    <div className="h-[100dvh] flex flex-col relative max-w-md mx-auto overflow-hidden bg-transparent">
       
       {showPasswordModal && <ChangePasswordModal onClose={() => setShowPasswordModal(false)} onSave={handlePasswordUpdate} />}
       
@@ -152,7 +152,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
       {/* Dynamic Header */}
       {!location.pathname.includes('/login') && !isSvamitva && !isRegister && (
-        <header className="px-4 py-3 flex justify-between items-center z-10 sticky top-0 bg-white/30 backdrop-blur-md border-b border-white/20 shadow-sm">
+        <header className="px-4 py-3 flex justify-between items-center z-10 sticky top-0 bg-white/30 backdrop-blur-md border-b border-white/20 shadow-sm shrink-0">
           <div className="flex items-center gap-3">
             {(isDetailPage || isClusterDetail) ? (
               <button onClick={handleBack} className="p-2 bg-white/40 hover:bg-white/60 rounded-full transition-colors border border-white/30 shadow-sm">
@@ -169,7 +169,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 {isDashboard ? 'Dashboard' : 
                  isClusters ? 'Clusters' :
                  isClusterDetail ? 'Cluster View' :
-                 isDetailPage ? 'Details' : 'House Tax 2026'}
+                 isDetailPage ? 'Details' : 'House Tax Admin'}
               </h1>
               {showHeaderActions && user && (
                 <div className="flex items-center gap-2">
@@ -197,13 +197,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       )}
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto no-scrollbar pb-20 scroll-smooth">
+      <main className="flex-1 overflow-y-auto no-scrollbar pb-24 scroll-smooth">
         {children}
       </main>
 
       {/* Bottom Navigation */}
       {!location.pathname.includes('/login') && !isDetailPage && !isSvamitva && !isRegister && (
-        <nav className="absolute bottom-0 w-full bg-white/30 backdrop-blur-md border-t border-white/20 flex justify-around py-3 z-20 pb-safe shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
+        <nav className="absolute bottom-0 left-0 right-0 bg-white/30 backdrop-blur-md border-t border-white/20 flex justify-around py-3 z-30 pb-safe shadow-[0_-5px_15px_rgba(0,0,0,0.05)]">
           <button 
             onClick={() => navigate('/dashboard')}
             className={`flex flex-col items-center gap-1 transition-transform active:scale-95 ${location.pathname === '/dashboard' ? 'text-brand-700 font-bold' : 'text-slate-600'}`}

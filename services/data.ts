@@ -11,30 +11,71 @@ import {
   RawCollection,
   RawHistory
 } from './loaders';
+import { googleSheetsService } from './googleSheets';
 
-// --- DATA INITIALIZATION (LOCAL) ---
+// --- DATA STORE ---
+// We keep the raw data in variables so we can re-merge when Cloud data arrives
+let rawDataStore = {
+  users: loadRawUsers(),
+  owners: loadRawOwners(),
+  properties: loadRawProperties(),
+  demands: loadRawDemands(),
+  collections: loadRawCollections(),
+  history: loadRawHistory()
+};
 
-const rawUsers = loadRawUsers();
-const rawOwners = loadRawOwners();
-const rawProperties = loadRawProperties();
-const rawDemands = loadRawDemands();
-const rawCollections = loadRawCollections();
-const rawHistory = loadRawHistory();
+// --- 0. DATA NORMALIZATION HELPER ---
+// This ensures that headers like "Owner Name" from Sheets become "OwnerName" for the app
+const normalizeSheetData = (data: any[]): any[] => {
+    if (!Array.isArray(data)) return [];
+    return data.map(row => {
+        const normalized: any = {};
+        Object.keys(row).forEach(key => {
+            // 1. Standard Normalization: Remove spaces, dots, special chars
+            // e.g. "Owner Name" -> "OwnerName", "Assessment No." -> "AssessmentNo"
+            const cleanKey = key.replace(/[^a-zA-Z0-9]/g, '');
+            normalized[cleanKey] = row[key];
+            
+            // 2. Explicit Mappings for tricky fields/Aliases
+            const lowerKey = cleanKey.toLowerCase();
+            
+            // Owner Mappings
+            if (lowerKey === 'assessmentno' || lowerKey === 'newassessmentno') normalized['AssessmentNo'] = row[key];
+            if (lowerKey === 'ownername' || lowerKey === 'nameofowner') normalized['OwnerName'] = row[key];
+            if (lowerKey === 'cluster' || lowerKey === 'clusterno' || lowerKey === 'clusterid') normalized['ClusterId'] = row[key];
+            if (lowerKey === 'doorno' || lowerKey === 'houseno') normalized['DoorNo'] = row[key];
+            if (lowerKey === 'mobile' || lowerKey === 'mobileno' || lowerKey === 'phone') normalized['Mobile'] = row[key];
+            
+            // Property Mappings
+            if (lowerKey === 'oldassessmentno') normalized['OldAssessmentNo'] = row[key];
+            if (lowerKey === 'buildingage' || lowerKey === 'age') normalized['BuildingAge'] = row[key];
+            if (lowerKey === 'natureofproperty' || lowerKey === 'propertytype') normalized['NatureOfProperty'] = row[key];
+            
+            // Keep original key too just in case
+            normalized[key] = row[key];
+        });
+        return normalized;
+    });
+};
 
 // --- 1. USER PROCESSING ---
 
-export const USERS: User[] = rawUsers.map((u) => ({
-  id: u.UserId,
-  name: u.Name,
-  password: String(u.Password),
-  phone: String(u.Phone),
-  role: u.Role as 'SUPER_ADMIN' | 'ADMIN' | 'USER',
-  clusters: u.Clusters ? u.Clusters.split('|') : []
-}));
+const processUsers = (raw: any[]): User[] => {
+  return raw.map((u) => ({
+    id: String(u.UserId || u.id || ''),
+    name: u.Name || u.name || 'Unknown',
+    password: String(u.Password || u.password || ''),
+    phone: String(u.Phone || u.phone || ''),
+    role: (u.Role || u.role || 'USER') as 'SUPER_ADMIN' | 'ADMIN' | 'USER',
+    clusters: (u.Clusters || u.clusters || '').split('|').filter(Boolean)
+  }));
+};
+
+export let USERS: User[] = processUsers(rawDataStore.users);
 
 // --- 2. DATA MERGING HELPERS ---
 
-const processDemands = (assessmentId: string, allDemands: RawDemand[]): DemandDetail[] => {
+const processDemands = (assessmentId: string, allDemands: any[]): DemandDetail[] => {
   return allDemands
     .filter((d) => String(d.AssessmentNo) === assessmentId)
     .map(d => ({
@@ -50,7 +91,7 @@ const processDemands = (assessmentId: string, allDemands: RawDemand[]): DemandDe
     }));
 };
 
-const processTapDemands = (assessmentId: string, allDemands: RawDemand[]): TapDemandDetail[] => {
+const processTapDemands = (assessmentId: string, allDemands: any[]): TapDemandDetail[] => {
   return allDemands
     .filter((d) => String(d.AssessmentNo) === assessmentId)
     .filter(d => d.TapFeeDemand > 0 || (d.TapRemarks && d.TapRemarks !== ''))
@@ -61,25 +102,25 @@ const processTapDemands = (assessmentId: string, allDemands: RawDemand[]): TapDe
     }));
 };
 
-const processPaymentHistory = (assessmentId: string, allCollections: RawCollection[]): PaymentRecord[] => {
+const processPaymentHistory = (assessmentId: string, allCollections: any[]): PaymentRecord[] => {
   return allCollections
-    .filter((c) => String(c['New Assessment No']) === assessmentId)
+    .filter((c) => String(c['New Assessment No'] || c.AssessmentNo || c.NewAssessmentNo) === assessmentId)
     .map((c, index) => ({
       sNo: String(index + 1),
-      receiptNo: c['Receipt No'],
-      dateOfPayment: c['Date of Payment'],
-      paymentSource: c['Payment Source'],
-      paymentMode: c['Payment Mode'],
-      amount: Number(c['TOTAL Tax (Rs.)'] || 0),
-      status: c['Receipt Status'],
-      cfmsStatus: c['Settlement at CFMS'],
-      dueYear: c['Due Year'],
-      demandCategory: c['Demand Category'],
-      guardianName: c['Guardian Name']
+      receiptNo: c['Receipt No'] || c.ReceiptNo,
+      dateOfPayment: c['Date of Payment'] || c.DateofPayment,
+      paymentSource: c['Payment Source'] || c.PaymentSource,
+      paymentMode: c['Payment Mode'] || c.PaymentMode,
+      amount: Number(c['TOTAL Tax (Rs.)'] || c.TOTALTaxRs || c.TotalTax || 0),
+      status: c['Receipt Status'] || c.ReceiptStatus,
+      cfmsStatus: c['Settlement at CFMS'] || c.SettlementatCFMS,
+      dueYear: c['Due Year'] || c.DueYear,
+      demandCategory: c['Demand Category'] || c.DemandCategory,
+      guardianName: c['Guardian Name'] || c.GuardianName
     }));
 };
 
-const processHistory = (assessmentId: string, allHistory: RawHistory[]): HistoryRecord[] => {
+const processHistory = (assessmentId: string, allHistory: any[]): HistoryRecord[] => {
   return allHistory
     .filter((h) => String(h.AssessmentNo) === assessmentId)
     .map((h) => ({
@@ -94,14 +135,17 @@ const processHistory = (assessmentId: string, allHistory: RawHistory[]): History
 
 // --- 3. MAIN JOIN LOGIC ---
 
-const mergeHouseholds = (): Household[] => {
-  return rawOwners.map((owner) => {
+const mergeHouseholds = (dataStore: any): Household[] => {
+  return dataStore.owners.map((owner: any) => {
     const assessmentNo = String(owner.AssessmentNo);
-    const property = rawProperties.find((p) => String(p.AssessmentNo) === assessmentNo) || {} as any;
-    const demandDetails = processDemands(assessmentNo, rawDemands);
-    const tapDemands = processTapDemands(assessmentNo, rawDemands);
-    const paymentHistory = processPaymentHistory(assessmentNo, rawCollections);
-    const history = processHistory(assessmentNo, rawHistory);
+    // Loose comparison for strings/numbers
+    const property = dataStore.properties.find((p: any) => String(p.AssessmentNo) === assessmentNo) || {} as any;
+    
+    const demandDetails = processDemands(assessmentNo, dataStore.demands);
+    const tapDemands = processTapDemands(assessmentNo, dataStore.demands);
+    const paymentHistory = processPaymentHistory(assessmentNo, dataStore.collections);
+    const history = processHistory(assessmentNo, dataStore.history);
+    
     const totalDemandAmount = demandDetails.reduce((sum, d) => sum + d.totalDemand, 0);
     const totalCollectedAmount = paymentHistory.reduce((sum, p) => sum + p.amount, 0);
 
@@ -161,7 +205,7 @@ const mergeHouseholds = (): Household[] => {
 };
 
 // INITIAL LOAD (Synchronous, from Mock Data)
-export const HOUSEHOLDS: Household[] = mergeHouseholds();
+export const HOUSEHOLDS: Household[] = mergeHouseholds(rawDataStore);
 
 // --- 4. CLUSTER DERIVATION ---
 
@@ -185,11 +229,10 @@ const deriveClusters = (): Cluster[] => {
 
 // Mutable Clusters Array
 export let CLUSTERS: Cluster[] = deriveClusters();
-export let isCloudConnected = false; // Always false in Offline Mode
+export let isCloudConnected = false; 
 
 // --- 5. RE-RENDER LOGIC ---
 
-// Observers for React Components to subscribe to
 const listeners: (() => void)[] = [];
 
 export const subscribeToData = (callback: () => void) => {
@@ -201,24 +244,100 @@ export const subscribeToData = (callback: () => void) => {
 };
 
 const notifyListeners = () => {
-  // Update Derived Clusters whenever HOUSEHOLDS changes
   const newClusters = deriveClusters();
-  // Update the CLUSTERS reference content
   CLUSTERS.splice(0, CLUSTERS.length, ...newClusters);
-  
   listeners.forEach(cb => cb());
 };
 
-// --- 6. OFFLINE SYNC PLACEHOLDERS ---
+// --- 6. GOOGLE SHEETS SYNC LOGIC ---
 
 export const initializeCloudSync = async () => {
-  console.log("App running in Offline Mode (Firebase Removed)");
-  isCloudConnected = false;
+  console.log("Initializing Google Sheets Sync...");
+  try {
+    const cloudData = await googleSheetsService.fetchAll();
+    
+    if (cloudData && cloudData.owners && cloudData.owners.length > 0) {
+      console.log(`Loaded ${cloudData.owners.length} owners from Google Sheets`);
+      
+      // Normalize incoming data (Fixes Space vs CamelCase issues)
+      const normalizedOwners = normalizeSheetData(cloudData.owners);
+      const normalizedProperties = normalizeSheetData(cloudData.properties);
+      const normalizedDemands = normalizeSheetData(cloudData.demands);
+      const normalizedCollections = normalizeSheetData(cloudData.collections);
+      const normalizedHistory = normalizeSheetData(cloudData.history);
+      const normalizedUsers = normalizeSheetData(cloudData.users || []);
+
+      // Update the raw data store
+      rawDataStore = {
+        users: normalizedUsers.length > 0 ? normalizedUsers : rawDataStore.users,
+        owners: normalizedOwners,
+        properties: normalizedProperties,
+        demands: normalizedDemands,
+        collections: normalizedCollections,
+        history: normalizedHistory
+      };
+
+      // Re-process Users
+      const updatedUsers = processUsers(rawDataStore.users);
+      USERS.splice(0, USERS.length, ...updatedUsers);
+
+      // Re-merge Households
+      const newHouseholds = mergeHouseholds(rawDataStore);
+      HOUSEHOLDS.splice(0, HOUSEHOLDS.length, ...newHouseholds);
+      
+      isCloudConnected = true;
+      notifyListeners();
+    } else {
+      console.warn("Google Sheets returned empty data. Using local backup.");
+    }
+  } catch (e) {
+    console.error("Cloud Sync Failed, running in Offline Mode:", e);
+    isCloudConnected = false;
+  }
   notifyListeners();
 };
 
 const saveHouseholdToCloud = async (household: Household) => {
-    // No-op in offline mode
+  // We need to split the Household object back into Owner, Property and Demand updates
+  const ownerUpdate = {
+     OwnerName: household.ownerName,
+     Mobile: household.mobileNumber,
+     Aadhar: household.aadharNumber,
+     DoorNo: household.doorNumber,
+     GuardianName: household.guardianName
+  };
+
+  const propertyUpdate = {
+     BuildingAge: household.buildingAge,
+     NatureOfProperty: household.natureOfProperty,
+     NatureOfUsage: household.natureOfUsage,
+     NatureOfOwnership: household.natureOfOwnership,
+     // Add fields as necessary matching the headers in Sheet
+     FloorDesc: household.floorDescription,
+     SiteLen: household.siteLength,
+     SiteBreadth: household.siteBreadth,
+     TotalFloorArea: household.totalFloorArea
+  };
+  
+  // Send full demand breakdown so correct columns in Sheets are updated
+  const demandUpdates = household.demandDetails.map(d => ({
+      DemandYear: d.demandYear,
+      PropertyTax: d.propertyTax,
+      LibraryCess: d.libraryCess,
+      LightingTax: d.lightingTax,
+      DrainageTax: d.drainageTax,
+      WaterTax: d.waterTax,
+      SportsCess: d.sportsCess,
+      FireTax: d.fireTax,
+      TotalDemand: d.totalDemand
+  }));
+
+  try {
+    await googleSheetsService.updateHousehold(household.id, ownerUpdate, propertyUpdate, demandUpdates);
+    console.log("Saved to Google Sheets:", household.id);
+  } catch (e) {
+    console.error("Failed to save to cloud:", e);
+  }
 };
 
 // --- 7. API INTERFACE ---
@@ -276,8 +395,8 @@ export const updateHousehold = (updated: Household) => {
   const index = HOUSEHOLDS.findIndex(h => h.id === updated.id);
   if (index !== -1) {
     HOUSEHOLDS[index] = updated; // Optimistic update
-    saveHouseholdToCloud(updated); // No-op
     notifyListeners();
+    saveHouseholdToCloud(updated); // Sync to Google Sheets
   }
 };
 
@@ -307,16 +426,51 @@ export const addPayment = (householdId: string, amount: number, mode: string): P
   const household = HOUSEHOLDS.find(h => h.id === householdId);
   if (!household) return null;
 
+  // Logic to calculate tax component breakdown based on proportion of total demand
+  // This assumes the payment pays off the tax components uniformly.
+  const totalDemand = household.totalDemand > 0 ? household.totalDemand : 1;
+  const ratio = amount / totalDemand;
+
+  const sumField = (field: keyof DemandDetail) => household.demandDetails.reduce((sum, d) => sum + (Number(d[field]) || 0), 0);
+
+  // Calculate components based on the ratio of payment
+  const taxComponents = {
+    houseTax: Math.round(sumField('propertyTax') * ratio),
+    libraryCess: Math.round(sumField('libraryCess') * ratio),
+    waterTax: Math.round(sumField('waterTax') * ratio),
+    lightingTax: Math.round(sumField('lightingTax') * ratio),
+    drainageTax: Math.round(sumField('drainageTax') * ratio),
+    sportsCess: Math.round(sumField('sportsCess') * ratio),
+    fireTax: Math.round(sumField('fireTax') * ratio),
+  };
+
+  // Adjust for rounding errors - add difference to House Tax (Property Tax)
+  const calcTotal = Object.values(taxComponents).reduce((a, b) => a + b, 0);
+  const diff = amount - calcTotal;
+  taxComponents.houseTax += diff;
+
+  // Determine Financial Year
+  // Logic: If current month is April (3) or later, start year is current year.
+  const currentMonth = new Date().getMonth(); // 0-11
+  const currentYear = new Date().getFullYear();
+  const startYear = currentMonth >= 3 ? currentYear : currentYear - 1;
+  const financialYear = `${startYear}-${(startYear + 1).toString().slice(-2)}`;
+
+  // Create Date and Time
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-GB').replace(/\//g, '-'); // dd-mm-yyyy
+  const timeStr = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }); // HH:MM
+
   const newRecord: PaymentRecord = {
       sNo: (household.paymentHistory.length + 1).toString(),
       receiptNo: `TAX${Date.now()}`,
-      dateOfPayment: new Date().toLocaleDateString('en-GB').replace(/\//g, '-'),
+      dateOfPayment: `${dateStr} ${timeStr}`,
       paymentSource: 'Admin Portal',
       paymentMode: mode,
       amount: amount,
       status: 'Success',
       cfmsStatus: 'Pending',
-      dueYear: 'Current',
+      dueYear: financialYear,
       demandCategory: 'Current',
       guardianName: household.guardianName
   };
@@ -325,9 +479,37 @@ export const addPayment = (householdId: string, amount: number, mode: string): P
   household.paymentHistory.unshift(newRecord);
   household.totalCollected += amount;
 
-  // Save to Cloud (No-op)
-  saveHouseholdToCloud(household);
+  // Prepare payload for Google Sheets - KEYS MUST MATCH SHEET HEADERS EXACTLY
+  const sheetPayload = {
+      'S.No.': newRecord.sNo,
+      'New Assessment No': household.assessmentNumber,
+      'Old Assessment No': household.oldAssessmentNumber,
+      'Owner Name': household.ownerName,
+      'Guardian Name': household.guardianName,
+      'Door No': household.doorNumber,
+      'Date of Payment': newRecord.dateOfPayment,
+      'Receipt No': newRecord.receiptNo,
+      'Payment Source': newRecord.paymentSource,
+      'Payment Mode': newRecord.paymentMode,
+      'Due Year': newRecord.dueYear,
+      'Demand Category': newRecord.demandCategory,
+      
+      // Breakdown fields
+      'House Tax (Rs.)': taxComponents.houseTax,
+      'Library Cess (Rs.)': taxComponents.libraryCess,
+      'Water Tax (Rs.)': taxComponents.waterTax,
+      'Lightning Tax (Rs.)': taxComponents.lightingTax,
+      'Drainage Tax (Rs.)': taxComponents.drainageTax,
+      'Sports Cess (Rs.)': taxComponents.sportsCess,
+      'Fire Tax (Rs.)': taxComponents.fireTax,
+
+      'TOTAL Tax (Rs.)': newRecord.amount,
+      'Receipt Status': newRecord.status,
+      'Settlement at CFMS': newRecord.cfmsStatus
+  };
+
   notifyListeners();
+  googleSheetsService.addPayment(sheetPayload);
 
   return newRecord;
 };
@@ -348,10 +530,18 @@ export const getAllPayments = (user?: User) => {
   }
 
   return allPayments.sort((a, b) => {
-    const [d1, m1, y1] = a.dateOfPayment.split('-').map(Number);
-    const [d2, m2, y2] = b.dateOfPayment.split('-').map(Number);
-    const time1 = new Date(y1, m1 - 1, d1).getTime();
-    const time2 = new Date(y2, m2 - 1, d2).getTime();
-    return time2 - time1;
+    // Parse complex date strings (DD-MM-YYYY or DD-MM-YYYY HH:MM)
+    const [date1, time1] = a.dateOfPayment.split(' ');
+    const [d1, m1, y1] = date1.split('-').map(Number);
+    const [h1, min1] = time1 ? time1.split(':').map(Number) : [0, 0];
+    
+    const [date2, time2] = b.dateOfPayment.split(' ');
+    const [d2, m2, y2] = date2.split('-').map(Number);
+    const [h2, min2] = time2 ? time2.split(':').map(Number) : [0, 0];
+
+    const t1 = new Date(y1, m1 - 1, d1, h1, min1).getTime();
+    const t2 = new Date(y2, m2 - 1, d2, h2, min2).getTime();
+    
+    return t2 - t1;
   });
 };
