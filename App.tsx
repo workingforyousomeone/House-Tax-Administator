@@ -1,5 +1,4 @@
 
-
 import React, { useState, useContext } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Users, LogOut, ArrowLeft, Home, TrendingUp, IndianRupee, TrendingDown, User, ArrowRight, DoorOpen, Settings, Key, X, CheckCircle, Shield } from 'lucide-react';
@@ -170,7 +169,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 {isDashboard ? 'Dashboard' : 
                  isClusters ? 'Clusters' :
                  isClusterDetail ? 'Cluster View' :
-                 isDetailPage ? 'Details' : 'House Tax Admin'}
+                 isDetailPage ? 'Details' : 'House Tax 2026'}
               </h1>
               {showHeaderActions && user && (
                 <button 

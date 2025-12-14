@@ -1,5 +1,4 @@
 
-
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../App';
 import { ArrowRight, User, Lock, Home, IndianRupee, KeyRound, X, Check, AlertCircle, Smartphone, LockKeyhole } from 'lucide-react';
@@ -243,7 +242,7 @@ export const Login: React.FC = () => {
                     <IndianRupee className="w-4 h-4 text-white" />
                 </div>
             </div>
-            <h1 className="text-3xl font-bold text-white tracking-tight text-center drop-shadow-md">House Tax</h1>
+            <h1 className="text-3xl font-bold text-white tracking-tight text-center drop-shadow-md">House Tax 2026</h1>
             <p className="text-brand-100 text-xs font-bold tracking-[0.3em] uppercase opacity-90 text-center mt-1">Admin Portal</p>
         </div>
 
