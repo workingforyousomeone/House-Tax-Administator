@@ -11,6 +11,7 @@ import { SvamitvaForm } from './pages/SvamitvaForm';
 import { CollectionRegister } from './pages/CollectionRegister';
 import { User as UserType } from './types';
 import { getHouseholdById, updateUserPassword, initializeCloudSync, subscribeToData, isCloudConnected } from './services/data';
+import { RESOURCES } from './resources';
 
 // Context for Auth (Updated to include User object)
 export const AuthContext = React.createContext<{
@@ -159,9 +160,13 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 <ArrowLeft className="w-5 h-5 text-slate-800" />
               </button>
             ) : (
-               // App Icon for main pages
-               <div className="bg-brand-600 p-1.5 rounded-lg shadow-sm border border-brand-500">
-                  <Home className="w-5 h-5 text-white" />
+               // App Icon for main pages - Updated to AP Logo from resources
+               <div className="bg-white/80 p-1 rounded-full shadow-sm border border-white/50">
+                  <img 
+                    src={RESOURCES.AP_GOVT_LOGO}
+                    alt="Logo"
+                    className="w-7 h-7 object-contain"
+                  />
                </div>
             )}
             <div>

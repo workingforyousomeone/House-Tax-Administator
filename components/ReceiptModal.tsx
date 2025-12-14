@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { PaymentRecord, Household } from '../types';
 import { X, Download, Printer, Loader2 } from 'lucide-react';
+import { RESOURCES } from '../resources';
 
 interface ReceiptModalProps {
   receiptNo: string;
@@ -125,33 +126,59 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ receiptNo, records, 
                 
                 {/* Printable Content Area */}
                 <div id="printable-receipt" className="p-4 text-black text-[10px] leading-tight overflow-y-auto bg-white flex-1">
-                    <div className="text-center mb-4">
-                         <div className="flex justify-center items-center gap-2 mb-0.5">
-                             <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" alt="Emblem" className="w-10 h-10 object-contain" />
-                             <div className="text-red-600 font-bold text-left leading-tight">
-                                 <p className="text-[12px]">పంచాయతి రాజ్ శాఖ</p>
-                                 <p className="text-[10px] text-black">Panchayat Raj Dept</p>
+                    <div className="mb-2">
+                         {/* Header with Logos */}
+                         <div className="flex justify-between items-start px-1 gap-2">
+                             {/* AP Govt Logo (Left) */}
+                             <img 
+                                src={RESOURCES.AP_GOVT_LOGO}
+                                alt="AP Govt" 
+                                className="w-12 h-12 object-contain" 
+                                crossOrigin="anonymous"
+                             />
+                             
+                             {/* Center Details */}
+                             <div className="text-center flex-1 pt-1">
+                                 <div className="text-red-600 font-bold leading-none mb-0.5">
+                                     <p className="text-[11px]">పంచాయతి రాజ్ శాఖ</p>
+                                     <p className="text-[9px] text-black">Panchayat Raj Dept</p>
+                                 </div>
+                                 <h2 className="font-bold text-[14px] text-slate-900 leading-none mb-0.5">Pogiri గ్రామ పంచాయతీ</h2>
+                                 <p className="text-[10px] text-slate-600 leading-none">Rajam మండలం ,Vizianagaram జిల్లా</p>
                              </div>
+
+                             {/* Panchayat Raj Logo (Right) */}
+                             <img 
+                                src={RESOURCES.PR_DEPT_LOGO}
+                                onError={(e) => {
+                                    // Fallback to Emblem if PR logo fails
+                                    e.currentTarget.src = RESOURCES.INDIA_EMBLEM;
+                                }}
+                                alt="PR Logo" 
+                                className="w-12 h-12 object-contain" 
+                                crossOrigin="anonymous"
+                             />
                          </div>
-                         <h2 className="font-bold text-[16px] text-slate-900 leading-tight">Pogiri గ్రామ పంచాయతీ</h2>
-                         <p className="text-[11px] text-slate-600">Rajam మండలం ,Vizianagaram జిల్లా</p>
-                         <div className="bg-slate-100 rounded px-3 py-0.5 inline-block mt-1 border border-slate-200">
-                            <p className="text-[12px] font-bold text-slate-800">2025-26 ఆర్థిక సంవత్సరం</p>
-                         </div>
-                         <h1 className="text-[18px] font-bold underline decoration-dotted decoration-slate-400 underline-offset-4 mt-1">House Tax రసీదు</h1>
+
+                         {/* Receipt Title Section */}
+                         <div className="text-center mt-1">
+                             <div className="bg-slate-100 rounded px-3 py-0 border border-slate-200 inline-block mb-0.5">
+                                <p className="text-[10px] font-bold text-slate-800 leading-tight">2025-26 ఆర్థిక సంవత్సరం</p>
+                             </div>
+                             <h1 className="text-[16px] font-bold underline decoration-dotted decoration-slate-400 underline-offset-4 leading-none">House Tax రసీదు</h1>
+                        </div>
                     </div>
                     
-                    <div className="border-t-2 border-dashed border-slate-300 my-4"></div>
+                    <div className="border-t-2 border-dashed border-slate-300 my-2"></div>
                     
                     <div className="mb-4 relative min-h-[100px]">
                         <p className="font-bold text-[11px] text-brand-700 mb-2 uppercase tracking-wide">అసెస్మెంట్ యజమాని వివరాలు:</p>
                         
-                        {/* Changed from fixed width spans to Grid Layout to allow text expansion */}
+                        {/* Grid Layout for Details */}
                         <div className="grid grid-cols-[100px_1fr] gap-y-1.5 text-[11px] pr-24">
                             <span className="text-slate-500">అసెస్మెంట్ నెం:</span>
                             <strong className="text-slate-900">{household.assessmentNumber}</strong>
                             
-                            {/* Shortened Label slightly to fit better, though grid handles it */}
                             <span className="text-slate-500">పాత అసెస్మెంట్:</span>
                             <strong className="text-slate-900">{household.oldAssessmentNumber}</strong>
                             
@@ -169,11 +196,11 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({ receiptNo, records, 
                         </div>
 
                         <div className="absolute top-0 right-0 p-1.5 bg-white border border-slate-200 rounded-lg shadow-sm">
-                            <img src={qrImageUrl} alt="QR Code" className="w-20 h-20 object-contain" />
+                            <img src={qrImageUrl} alt="QR Code" className="w-20 h-20 object-contain" crossOrigin="anonymous" />
                         </div>
                     </div>
 
-                    <div className="border-t-2 border-dashed border-slate-300 my-4"></div>
+                    <div className="border-t-2 border-dashed border-slate-300 my-2"></div>
 
                     <div className="mb-4">
                         <p className="font-bold text-[11px] text-brand-700 mb-2 uppercase tracking-wide">రసీదు వివరాలు:</p>
