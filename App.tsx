@@ -1,7 +1,7 @@
 
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { HashRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, ArrowLeft, Home, TrendingUp, IndianRupee, TrendingDown, User, ArrowRight, DoorOpen, Settings, Key, X, CheckCircle, Shield } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, ArrowLeft, Home, TrendingUp, IndianRupee, TrendingDown, User, ArrowRight, DoorOpen, Settings, Key, X, CheckCircle, Shield, Cloud, CloudOff } from 'lucide-react';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { Clusters } from './pages/Clusters';
@@ -10,7 +10,7 @@ import { HouseholdDetail } from './pages/HouseholdDetail';
 import { SvamitvaForm } from './pages/SvamitvaForm';
 import { CollectionRegister } from './pages/CollectionRegister';
 import { User as UserType } from './types';
-import { getHouseholdById, updateUserPassword } from './services/data';
+import { getHouseholdById, updateUserPassword, initializeCloudSync, subscribeToData, isCloudConnected } from './services/data';
 
 // Context for Auth (Updated to include User object)
 export const AuthContext = React.createContext<{
@@ -172,12 +172,19 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                  isDetailPage ? 'Details' : 'House Tax 2026'}
               </h1>
               {showHeaderActions && user && (
-                <button 
-                    onClick={() => setShowPasswordModal(true)}
-                    className="text-xs text-slate-700 font-medium truncate max-w-[150px] flex items-center gap-1 hover:text-brand-700 transition-colors"
-                >
-                  <User className="w-3 h-3" /> {user.name} <Settings className="w-3 h-3 ml-0.5 opacity-50" />
-                </button>
+                <div className="flex items-center gap-2">
+                   <button 
+                       onClick={() => setShowPasswordModal(true)}
+                       className="text-xs text-slate-700 font-medium truncate max-w-[150px] flex items-center gap-1 hover:text-brand-700 transition-colors"
+                   >
+                     <User className="w-3 h-3" /> {user.name} <Settings className="w-3 h-3 ml-0.5 opacity-50" />
+                   </button>
+                   {/* Dynamic Connection Status Indicator */}
+                   <div className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold border ${isCloudConnected ? 'bg-green-100/80 text-green-700 border-green-200' : 'bg-orange-100/80 text-orange-700 border-orange-200'}`} title={isCloudConnected ? "Data Synced Globally" : "Using Local Data (Offline)"}>
+                       {isCloudConnected ? <Cloud className="w-3 h-3" /> : <CloudOff className="w-3 h-3" />}
+                       {isCloudConnected ? 'Online' : 'Offline'}
+                   </div>
+                </div>
               )}
             </div>
           </div>
@@ -219,16 +226,28 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 
 export default function App() {
   const [user, setUser] = useState<UserType | null>(null);
+  const [dataVersion, setDataVersion] = useState(0); // State to trigger re-renders on data change
+
+  useEffect(() => {
+    // 1. Start Cloud Sync on App Mount
+    initializeCloudSync();
+
+    // 2. Subscribe to Data Changes
+    // This function will be called whenever data.ts receives new data from cloud or connection status changes
+    const unsubscribe = subscribeToData(() => {
+        setDataVersion(v => v + 1); // Force re-render of context consumers
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const login = (userData: UserType) => setUser(userData);
   const logout = () => setUser(null);
   
   const changePassword = (newPass: string) => {
       if (!user) return false;
-      // Update local state
       const updated = { ...user, password: newPass };
       setUser(updated);
-      // Update data source (for current session persistence)
       return updateUserPassword(user.id, newPass);
   };
 

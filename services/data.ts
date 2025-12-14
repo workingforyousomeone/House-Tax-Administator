@@ -1,5 +1,4 @@
 
-
 import { Cluster, Household, DemandDetail, TapDemandDetail, PaymentRecord, User, HistoryRecord } from '../types';
 import { 
   loadRawUsers, 
@@ -13,7 +12,7 @@ import {
   RawHistory
 } from './loaders';
 
-// --- DATA INITIALIZATION ---
+// --- DATA INITIALIZATION (LOCAL) ---
 
 const rawUsers = loadRawUsers();
 const rawOwners = loadRawOwners();
@@ -63,7 +62,6 @@ const processTapDemands = (assessmentId: string, allDemands: RawDemand[]): TapDe
 };
 
 const processPaymentHistory = (assessmentId: string, allCollections: RawCollection[]): PaymentRecord[] => {
-  // Collection CSV uses 'New Assessment No' as the key
   return allCollections
     .filter((c) => String(c['New Assessment No']) === assessmentId)
     .map((c, index) => ({
@@ -94,32 +92,22 @@ const processHistory = (assessmentId: string, allHistory: RawHistory[]): History
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 };
 
-// --- 3. MAIN JOIN LOGIC (Primary Key: AssessmentNo) ---
+// --- 3. MAIN JOIN LOGIC ---
 
 const mergeHouseholds = (): Household[] => {
   return rawOwners.map((owner) => {
     const assessmentNo = String(owner.AssessmentNo);
-
-    // 3.1 Property Details
     const property = rawProperties.find((p) => String(p.AssessmentNo) === assessmentNo) || {} as any;
-
-    // 3.2 Financials
     const demandDetails = processDemands(assessmentNo, rawDemands);
     const tapDemands = processTapDemands(assessmentNo, rawDemands);
     const paymentHistory = processPaymentHistory(assessmentNo, rawCollections);
-    
-    // 3.3 Lifecycle
     const history = processHistory(assessmentNo, rawHistory);
-
-    // 3.4 Aggregations
     const totalDemandAmount = demandDetails.reduce((sum, d) => sum + d.totalDemand, 0);
     const totalCollectedAmount = paymentHistory.reduce((sum, p) => sum + p.amount, 0);
 
     return {
       id: assessmentNo,
       clusterId: String(owner.ClusterId || 'C1'),
-
-      // Owner Register Data
       assessmentNumber: assessmentNo,
       oldAssessmentNumber: String(property.OldAssessmentNo || ''),
       ownerName: owner.OwnerName,
@@ -127,27 +115,22 @@ const mergeHouseholds = (): Household[] => {
       aadharNumber: owner.Aadhar,
       gender: owner.Gender,
       guardianName: owner.GuardianName,
-      relationType: 'Father', // Default, as not in CSV
+      relationType: 'Father',
       doorNumber: owner.DoorNo,
       address: owner.Address,
       surveyNumber: String(property.SurveyNo || ''),
-
-      // Property Details
       buildingAge: property.BuildingAge || '',
       natureOfProperty: property.NatureOfProperty || '',
       natureOfLandUse: property.NatureOfLandUse || '',
       natureOfUsage: property.NatureOfUsage || '',
       natureOfOwnership: property.NatureOfOwnership || '',
       modeOfAcquisition: property.ModeOfAcquisition || '',
-
       boundaries: {
         east: property.East || '',
         west: property.West || '',
         north: property.North || '',
         south: property.South || ''
       },
-
-      // Floor Details
       floorDescription: property.FloorDesc || '',
       classificationDescription: property.ClassDesc || '',
       buildingCategoryDescription: property.BldgCat || '',
@@ -159,8 +142,6 @@ const mergeHouseholds = (): Household[] => {
       floorBreadth: Number(property.FloorBreadth || 0),
       totalFloorArea: Number(property.TotalFloorArea || 0),
       subtypeConstructionDescription: property.SubtypeDesc || '',
-
-      // Site/Building Details
       siteLength: Number(property.SiteLen || 0),
       siteBreadth: Number(property.SiteBreadth || 0),
       siteCapitalValue: Number(property.SiteCapVal || 0),
@@ -168,8 +149,6 @@ const mergeHouseholds = (): Household[] => {
       buildingTypeDescription: property.BldgType || '',
       buildingCapitalValue: Number(property.BldgCapVal || 0),
       buildingRatePerSqFeet: Number(property.BldgRate || 0),
-
-      // Integrated Modules
       demandDetails,
       tapDemands,
       totalDemand: totalDemandAmount,
@@ -181,13 +160,13 @@ const mergeHouseholds = (): Household[] => {
   });
 };
 
+// INITIAL LOAD (Synchronous, from Mock Data)
 export const HOUSEHOLDS: Household[] = mergeHouseholds();
 
 // --- 4. CLUSTER DERIVATION ---
 
 const deriveClusters = (): Cluster[] => {
   const uniqueClusterIds = Array.from(new Set(HOUSEHOLDS.map(h => h.clusterId)));
-  
   return uniqueClusterIds.map((id) => {
     const clusterHouseholds = HOUSEHOLDS.filter(h => h.clusterId === id);
     const totalDemand = clusterHouseholds.reduce((sum, h) => sum + h.totalDemand, 0);
@@ -195,7 +174,7 @@ const deriveClusters = (): Cluster[] => {
 
     return {
       id: id,
-      code: id, // e.g., C1
+      code: id,
       name: `Cluster ${id.replace('C', '')}`,
       totalHouseholds: clusterHouseholds.length,
       totalDemand: totalDemand,
@@ -204,9 +183,45 @@ const deriveClusters = (): Cluster[] => {
   });
 };
 
-export const CLUSTERS: Cluster[] = deriveClusters();
+// Mutable Clusters Array
+export let CLUSTERS: Cluster[] = deriveClusters();
+export let isCloudConnected = false; // Always false in Offline Mode
 
-// --- 5. API INTERFACE ---
+// --- 5. RE-RENDER LOGIC ---
+
+// Observers for React Components to subscribe to
+const listeners: (() => void)[] = [];
+
+export const subscribeToData = (callback: () => void) => {
+  listeners.push(callback);
+  return () => {
+    const index = listeners.indexOf(callback);
+    if (index > -1) listeners.splice(index, 1);
+  };
+};
+
+const notifyListeners = () => {
+  // Update Derived Clusters whenever HOUSEHOLDS changes
+  const newClusters = deriveClusters();
+  // Update the CLUSTERS reference content
+  CLUSTERS.splice(0, CLUSTERS.length, ...newClusters);
+  
+  listeners.forEach(cb => cb());
+};
+
+// --- 6. OFFLINE SYNC PLACEHOLDERS ---
+
+export const initializeCloudSync = async () => {
+  console.log("App running in Offline Mode (Firebase Removed)");
+  isCloudConnected = false;
+  notifyListeners();
+};
+
+const saveHouseholdToCloud = async (household: Household) => {
+    // No-op in offline mode
+};
+
+// --- 7. API INTERFACE ---
 
 export const authenticateUser = (username: string, password: string): User | undefined => {
   return USERS.find(u => u.id === username && u.password === password);
@@ -229,8 +244,6 @@ export const getDashboardStats = (user?: User) => {
   let relevantHouseholds = HOUSEHOLDS;
   let relevantClusters = CLUSTERS;
 
-  // Filter only if user is a standard USER (assigned clusters). 
-  // ADMIN and SUPER_ADMIN see all data.
   if (user && user.role === 'USER') {
     relevantClusters = CLUSTERS.filter(c => user.clusters.includes(c.id));
     relevantHouseholds = HOUSEHOLDS.filter(h => user.clusters.includes(h.clusterId));
@@ -262,12 +275,14 @@ export const getHouseholdById = (id: string) => HOUSEHOLDS.find(h => h.id === id
 export const updateHousehold = (updated: Household) => {
   const index = HOUSEHOLDS.findIndex(h => h.id === updated.id);
   if (index !== -1) {
-    HOUSEHOLDS[index] = updated;
+    HOUSEHOLDS[index] = updated; // Optimistic update
+    saveHouseholdToCloud(updated); // No-op
+    notifyListeners();
   }
 };
 
 export const getClustersForUser = (user?: User) => {
-  if (!user || user.role !== 'USER') return CLUSTERS; // Both ADMIN and SUPER_ADMIN get all
+  if (!user || user.role !== 'USER') return CLUSTERS;
   return CLUSTERS.filter(c => user.clusters.includes(c.id));
 };
 
@@ -281,7 +296,6 @@ export const searchHouseholds = (query: string, user?: User): Household[] => {
     h.mobileNumber.includes(q)
   );
 
-  // Filter by user clusters if they are a restricted user
   if (user && user.role === 'USER') {
     results = results.filter(h => user.clusters.includes(h.clusterId));
   }
@@ -302,24 +316,22 @@ export const addPayment = (householdId: string, amount: number, mode: string): P
       amount: amount,
       status: 'Success',
       cfmsStatus: 'Pending',
-      dueYear: 'Current', // Simplified for demo
+      dueYear: 'Current',
       demandCategory: 'Current',
       guardianName: household.guardianName
   };
 
+  // Mutate object directly
   household.paymentHistory.unshift(newRecord);
   household.totalCollected += amount;
 
-  // Update Cluster Stats (Find and mutate in-memory cluster)
-  const cluster = CLUSTERS.find(c => c.id === household.clusterId);
-  if (cluster) {
-      cluster.totalCollected += amount;
-  }
+  // Save to Cloud (No-op)
+  saveHouseholdToCloud(household);
+  notifyListeners();
 
   return newRecord;
 };
 
-// --- NEW HELPER: Get All Payments Globally (Filtered by User) ---
 export const getAllPayments = (user?: User) => {
   let allPayments = HOUSEHOLDS.flatMap(h => 
     h.paymentHistory.map(p => ({
@@ -331,17 +343,13 @@ export const getAllPayments = (user?: User) => {
     }))
   );
 
-  // Filter by user clusters if they are a restricted user
   if (user && user.role === 'USER') {
     allPayments = allPayments.filter(p => user.clusters.includes(p.clusterId));
   }
 
   return allPayments.sort((a, b) => {
-    // Sort by Date Descending
-    // Format is DD-MM-YYYY
     const [d1, m1, y1] = a.dateOfPayment.split('-').map(Number);
     const [d2, m2, y2] = b.dateOfPayment.split('-').map(Number);
-    // Note: Month is 0-indexed in Date constructor
     const time1 = new Date(y1, m1 - 1, d1).getTime();
     const time2 = new Date(y2, m2 - 1, d2).getTime();
     return time2 - time1;
