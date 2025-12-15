@@ -6,7 +6,7 @@ import {
   LayoutGrid, Hammer, RefreshCcw, Gift, Trash2, Milestone, Pencil, ChevronDown, Check, X, 
   AlertCircle, ShieldAlert, Calculator, Printer, IndianRupee, CreditCard, Home, 
   Smartphone, UserCheck, Map, Key, CalendarClock, Building2, Ruler, Compass, 
-  FileBadge, Receipt, Wallet, CalendarDays, Lock, ScanLine, proportions, Eye, EyeOff,
+  FileBadge, Receipt, Wallet, CalendarDays, Lock, ScanLine, Eye, EyeOff,
   Coins, Banknote
 } from 'lucide-react';
 import { getHouseholdById, updateHousehold } from '../services/data';
@@ -303,7 +303,7 @@ export const HouseholdDetail: React.FC = () => {
         <SectionHeader icon={<Home />} title="Property Details" />
         <div className="grid grid-cols-3 gap-2 mb-3">
              <InfoItem icon={<Building2 />} label="Type" value={data.natureOfProperty} color="bg-indigo-500" />
-              <InfoItem icon={<proportions />} label="Usage" value={data.natureOfUsage} color="bg-teal-600" /> 
+              <InfoItem icon={<LayoutGrid />} label="Usage" value={data.natureOfUsage} color="bg-teal-600" /> 
              <InfoItem icon={<Key />} label="Ownership" value={data.natureOfOwnership} color="bg-orange-500" />
              <InfoItem icon={<CalendarClock />} label="Age" value={data.buildingAge} color="bg-pink-600" />
              <InfoItem icon={<Layers />} label="Floors" value={data.floorDescription} color="bg-cyan-600" />

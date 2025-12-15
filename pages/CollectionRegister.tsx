@@ -6,6 +6,7 @@ import { getAllPayments, getHouseholdById } from '../services/data';
 import { AuthContext } from '../App';
 import { PaymentRecord, Household } from '../types';
 import { ReceiptModal } from '../components/ReceiptModal';
+import { RESOURCES } from '../resources';
 
 export const CollectionRegister: React.FC = () => {
   const navigate = useNavigate();
@@ -63,7 +64,7 @@ export const CollectionRegister: React.FC = () => {
     const datePart = parts[0];
     let timePart = parts.slice(1).join(' ');
 
-    // Strip seconds if present (e.g., from mock data if any, or API)
+    // Strip seconds if present
     if (timePart.split(':').length > 2) {
        timePart = timePart.split(':').slice(0, 2).join(':');
     }
@@ -71,8 +72,7 @@ export const CollectionRegister: React.FC = () => {
     const [d, m, y] = datePart.split('-');
     if (d && m && y && y.length === 4) {
         const formatted = `${y}-${m}-${d}`;
-        // User requested small format like "2025-01-11 t 18:30"
-        return timePart ? `${formatted} t ${timePart}` : formatted;
+        return timePart ? `${formatted} • ${timePart}` : formatted;
     }
     return dateStr;
   };
@@ -102,6 +102,17 @@ export const CollectionRegister: React.FC = () => {
                  <button onClick={() => navigate(-1)} className="p-1 hover:bg-white/40 rounded-full transition-colors">
                     <ArrowLeft className="w-6 h-6 text-slate-800" />
                  </button>
+                 {/* Branding in Header */}
+                 <div className="bg-white/80 p-1 rounded-full shadow-sm border border-white/50">
+                    <img 
+                        src={RESOURCES.AP_GOVT_LOGO} 
+                        className="w-8 h-8 object-contain" 
+                        alt="Logo"
+                        onError={(e) => {
+                             e.currentTarget.src = RESOURCES.INDIA_EMBLEM;
+                        }} 
+                    />
+                 </div>
                  <h1 className="text-lg font-bold text-slate-900">Collection Register</h1>
              </div>
         </div>

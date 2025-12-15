@@ -56,6 +56,7 @@ AssessmentNo,DemandYear,PropertyTax,LibraryCess,LightingTax,DrainageTax,SportsCe
 `;
 
 // 4. Collection Register (Payments)
+// Updated with recent records to reflect current state
 export const collectionCSV = `
 S.No.,New Assessment No,Old Assessment No,Owner Name,Guardian Name,Door No,Date of Payment,Receipt No,Payment Source,Payment Mode,Due Year,Demand Category,House Tax (Rs.),Library Cess (Rs.),Water Tax (Rs.),Lightning Tax (Rs.),Drainage Tax (Rs.),Sports Cess (Rs.),Fire Tax (Rs.),TOTAL Tax (Rs.),Receipt Status,Settlement at CFMS
 1,211320000421,421,YENDUVA RAMANA,Appala Swami,211320C10-45,20-10-2025,TAX20102025092826192,Citizen Online,UPI(QR Code),2024-25,Arrear,120,10,12,10,12,4,1,169,Success,Settled
@@ -64,9 +65,11 @@ S.No.,New Assessment No,Old Assessment No,Owner Name,Guardian Name,Door No,Date 
 4,211320001218,1218,SILLA MANMADHA RAO,Appala Swami,7-84,24-10-2025,TAX24102025115031896,Panchayat Counter,UPI(QR Code),2025-26,Current,629,50,50,63,63,19,6,880,Success,Settled
 5,211320000783,783,POGIRI SURYUDU,Appala Swami,6-28,29-10-2025,TAX29102025024811772,Panchayat Counter,UPI(QR Code),2024-25,Arrear,91,7,9,7,9,3,1,127,Success,Settled
 6,211320000783,783,POGIRI SURYUDU,Appala Swami,6-28,29-10-2025,TAX29102025024811772,Panchayat Counter,UPI(QR Code),2025-26,Current,96,8,8,10,10,3,1,136,Success,Settled
-1,211320000249,249,JADDU VISHNUMURTHI,Appala Swami,211320C7-14,11-11-2025,TAX11112025125628234,Panchayat Counter,UPI(QR Code),2025-26,Current,582,47,47,58,58,17,6,815,Success,Settled
-2,211320001552,1552,MAKKA TANUSHA,Appala Swami,211320C28-55,13-11-2025,TAX13112025011400571,Panchayat Counter,UPI(QR Code),2025-26,Current,463,37,37,46,46,14,5,648,Success,Settled
-3,211320001604,1604,MAKKA RAMANA,Appala Swami,1-5-55/A,13-11-2025,TAX13112025012458616,Panchayat Counter,UPI(QR Code),2025-26,Current,1059,85,85,106,106,32,11,1484,Success,Settled
+7,211320000249,249,JADDU VISHNUMURTHI,Appala Swami,211320C7-14,11-11-2025,TAX11112025125628234,Panchayat Counter,UPI(QR Code),2025-26,Current,582,47,47,58,58,17,6,815,Success,Settled
+8,211320001552,1552,MAKKA TANUSHA,Appala Swami,211320C28-55,13-11-2025,TAX13112025011400571,Panchayat Counter,UPI(QR Code),2025-26,Current,463,37,37,46,46,14,5,648,Success,Settled
+9,211320001604,1604,MAKKA RAMANA,Appala Swami,1-5-55/A,13-11-2025,TAX13112025012458616,Panchayat Counter,UPI(QR Code),2025-26,Current,1059,85,85,106,106,32,11,1484,Success,Settled
+10,211320001007,1007,ENUGUTALA APPALANAIDU,RAMULU,211320C24-1,15-11-2025,TAX15112025091022101,Admin Portal,Cash,2025-26,Current,246,20,25,25,7,2,20,345,Success,Pending
+11,211320002001,2001,LABHANA SAMPLE,TEST,211320C4-1,16-11-2025,TAX16112025142055999,Admin Portal,UPI,2025-26,Current,500,50,50,50,50,10,10,720,Success,Settled
 `;
 
 // 5. User Register

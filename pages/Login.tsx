@@ -1,7 +1,7 @@
 
 import React, { useContext, useState } from 'react';
 import { AuthContext } from '../App';
-import { ArrowRight, User, Lock, KeyRound, X, Check, Smartphone, LockKeyhole } from 'lucide-react';
+import { ArrowRight, User, Lock, KeyRound, X, Check, Smartphone } from 'lucide-react';
 import { authenticateUser, getUser, updateUserPassword } from '../services/data';
 import { User as UserType } from '../types';
 import { RESOURCES } from '../resources';
@@ -173,7 +173,8 @@ export const Login: React.FC = () => {
                        <div className="space-y-4 animate-in slide-in-from-right-8">
                            <div className="flex items-center gap-3 mb-2">
                                <div className="bg-green-100 p-2 rounded-lg text-green-600">
-                                   <LockKeyhole className="w-6 h-6" />
+                                   {/* Changed LockKeyhole to Lock to fix build error */}
+                                   <Lock className="w-6 h-6" />
                                </div>
                                <h3 className="text-lg font-bold text-slate-800">New Password</h3>
                            </div>
