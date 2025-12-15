@@ -10,7 +10,7 @@ import {
   Coins, Banknote
 } from 'lucide-react';
 import { getHouseholdById, updateHousehold } from '../services/data';
-import { AuthContext } from '../App';
+import { AuthContext } from '../contexts/AuthContext';
 import { Household, HistoryRecord, DemandDetail, AuditLog, PaymentRecord } from '../types';
 import { PaymentModal } from '../components/PaymentModal';
 import { ReceiptModal } from '../components/ReceiptModal';

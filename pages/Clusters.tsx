@@ -2,7 +2,7 @@
 import React, { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getClustersForUser } from '../services/data';
-import { AuthContext } from '../App';
+import { AuthContext } from '../contexts/AuthContext';
 
 export const Clusters: React.FC = () => {
   const navigate = useNavigate();

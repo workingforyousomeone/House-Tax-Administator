@@ -3,7 +3,7 @@ import React, { useState, useContext, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, ArrowLeft, Filter, Calendar, User, QrCode, Banknote, CreditCard, Tag, Clock } from 'lucide-react';
 import { getAllPayments, getHouseholdById } from '../services/data';
-import { AuthContext } from '../App';
+import { AuthContext } from '../contexts/AuthContext';
 import { PaymentRecord, Household } from '../types';
 import { ReceiptModal } from '../components/ReceiptModal';
 import { RESOURCES } from '../resources';

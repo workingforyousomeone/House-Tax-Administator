@@ -1,6 +1,6 @@
 
 import React, { useContext, useState } from 'react';
-import { AuthContext } from '../App';
+import { AuthContext } from '../contexts/AuthContext';
 import { ArrowRight, User, Lock, KeyRound, X, Check, Smartphone } from 'lucide-react';
 import { authenticateUser, getUser, updateUserPassword } from '../services/data';
 import { User as UserType } from '../types';

@@ -12,19 +12,7 @@ import { CollectionRegister } from './pages/CollectionRegister';
 import { User as UserType } from './types';
 import { getHouseholdById, updateUserPassword, initializeCloudSync, subscribeToData, isCloudConnected } from './services/data';
 import { RESOURCES } from './resources';
-
-// Context for Auth (Updated to include User object)
-export const AuthContext = React.createContext<{
-  user: UserType | null;
-  login: (user: UserType) => void;
-  logout: () => void;
-  changePassword: (newPass: string) => boolean;
-}>({
-  user: null,
-  login: () => {},
-  logout: () => {},
-  changePassword: () => false,
-});
+import { AuthContext } from './contexts/AuthContext';
 
 // --- CHANGE PASSWORD MODAL ---
 const ChangePasswordModal: React.FC<{ onClose: () => void; onSave: (p: string) => void }> = ({ onClose, onSave }) => {

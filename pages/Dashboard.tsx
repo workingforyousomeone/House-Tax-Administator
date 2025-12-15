@@ -3,7 +3,7 @@ import React, { useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, TrendingUp, IndianRupee, TrendingDown, Users, LayoutGrid, FileText, CreditCard, Search, X, ChevronRight, ClipboardList } from 'lucide-react';
 import { getDashboardStats, getClustersForUser, searchHouseholds } from '../services/data';
-import { AuthContext } from '../App';
+import { AuthContext } from '../contexts/AuthContext';
 import { PaymentModal } from '../components/PaymentModal';
 import { Household } from '../types';
 
